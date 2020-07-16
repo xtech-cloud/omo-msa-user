@@ -1,6 +1,7 @@
 package nosql
 
 import (
+	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
@@ -12,11 +13,14 @@ type User struct {
 	CreatedTime time.Time          `json:"createdAt" bson:"createdAt"`
 	UpdatedTime time.Time          `json:"updatedAt" bson:"updatedAt"`
 	DeleteTime  time.Time          `json:"deleteAt" bson:"deleteAt"`
+	Creator     string             `json:"creator" bson:"creator"`
+	Operator    string             `json:"operator" bson:"operator"`
 
-	Name   string                `json:"name" bson:"name"`
-	Account  string                `json:"table" bson:"table"`
-	Remark string `json:"remark" bson:"remark"`
-	Datum string                `json:"datum" bson:"datum"`
+	Name    string `json:"name" bson:"name"`
+	Account string `json:"account" bson:"account"`
+	Remark  string `json:"remark" bson:"remark"`
+	Type    uint8  `json:"type" bson:"type"`
+	Datum   string `json:"datum" bson:"datum"`
 }
 
 func CreateUser(info *User) error {
@@ -45,8 +49,25 @@ func GetUser(uid string) (*User, error) {
 	return model, nil
 }
 
+func GetAllUsers() ([]*User, error) {
+	cursor, err1 := findAll(TableUser, 0)
+	if err1 != nil {
+		return nil, err1
+	}
+	var items = make([]*User, 0, 200)
+	for cursor.Next(context.Background()) {
+		var node = new(User)
+		if err := cursor.Decode(node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
 func GetUserByAccount(uid string) (*User, error) {
-	msg := bson.M{"account":uid}
+	msg := bson.M{"account": uid}
 	result, err := findOneBy(TableUser, msg)
 	if err != nil {
 		return nil, err
@@ -59,8 +80,8 @@ func GetUserByAccount(uid string) (*User, error) {
 	return model, nil
 }
 
-func UpdateUserBase(uid, name, remark string) error {
-	msg := bson.M{"name": name, "remark": remark, "updatedAt": time.Now()}
+func UpdateUserBase(uid, name, remark, operator string) error {
+	msg := bson.M{"name": name, "remark": remark, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
@@ -71,7 +92,7 @@ func UpdateUserCover(uid string, icon string) error {
 	return err
 }
 
-func RemoveUser(uid string) error {
-	_, err := removeOne(TableUser, uid)
+func RemoveUser(uid, operator string) error {
+	_, err := removeOne(TableUser, uid, operator)
 	return err
 }

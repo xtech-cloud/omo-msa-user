@@ -20,32 +20,8 @@ type DBConfig struct {
 	Name     string	`yaml:"name"`
 }
 
-type GraphConfig struct {
-	Password string	`yaml:"password"`
-	IP      string	`yaml:"ip"`
-	Port     string	`yaml:"port"`
-	Name     string	`yaml:"name"`
-	User     string	`yaml:"user"`
-}
-
-type CacheConfig struct {
-	Kind      int `ini:"kind"`
-	Domain    string `ini:"domain"`
-	Bucket    string `ini:"bucket"`
-	AccessKey string `ini:"accessKey"`
-	SecretKey string `ini:"secretKey"`
-}
-
-type BasicConfig struct {
-	SynonymMax     int `ini:"synonym"`
-	TagMax    int `ini:"tag"`
-}
-
 type SchemaConfig struct {
 	Service  ServiceConfig `yaml:"service"`
 	Logger   LoggerConfig  `yaml:"logger"`
 	Database DBConfig      `yaml:"database"`
-	Graph    GraphConfig   `yaml:"graph"`
-	Cache	 CacheConfig  `yaml:"cache"`
-	Basic   BasicConfig `yaml:"basic"`
 }

@@ -19,7 +19,8 @@ run:
 
 .PHONY: call
 call:
-	MICRO_REGISTRY=consul micro call omo.msa.user Echo.Call '{"name":"John"}'
+	MICRO_REGISTRY=consul micro call omo.msa.user UserService.GetByPage '{"number":5, "page":2}'
+
 
 .PHONY: tester
 tester:

@@ -15,24 +15,6 @@ import (
 	"time"
 )
 
-/**
-type Base struct {
-	ID          uint64    `json:"id" bson:"id"`
-	Name        string    `json:"name" bson:"name"`
-	CreatedTime time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedTime time.Time `json:"updatedAt" bson:"updatedAt"`
-	DeleteTime  time.Time `json:"deleteAt" bson:"deleteAt"`
-}*/
-
-type FileInfo struct {
-	UID         string    `json:"_id" bson:"_id"`
-	UpdatedTime time.Time `json:"uploadDate" bson:"uploadDate"`
-	Name        string    `json:"filename" bson:"filename"`
-	MD5         string    `json:"md5" bson:"md5"`
-	Size        int64     `json:"length" bson:"length"`
-	Type        string    `json:"type" bson:"type"`
-}
-
 var noSql *mongo.Database
 var dbClient *mongo.Client
 

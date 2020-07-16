@@ -8,13 +8,14 @@ import (
 )
 
 type UserInfo struct {
+	Type uint8
 	BaseInfo
 	Account string
 	Remark string
 	Datum DatumInfo
 }
 
-func CreateUser(account , name, remark string, info *DatumInfo) (*UserInfo, error) {
+func CreateUser(account , name, remark string, tp uint8, info *DatumInfo) (*UserInfo, error) {
 	err1 := createDatum(info)
 	if err1 != nil {
 		return nil, err1
@@ -24,6 +25,7 @@ func CreateUser(account , name, remark string, info *DatumInfo) (*UserInfo, erro
 	db.ID = nosql.GetUserNextID()
 	db.CreatedTime = time.Now()
 	db.Name = name
+	db.Type = tp
 	db.Account = account
 	db.Remark = remark
 	db.Datum = info.UID
@@ -89,11 +91,11 @@ func GetUserByAccount(account string) *UserInfo {
 	return nil
 }
 
-func RemoveUser(uid string) error {
+func RemoveUser(uid, operator string) error {
 	if len(uid) < 1{
 		return errors.New("the user uid is empty")
 	}
-	err := nosql.RemoveUser(uid)
+	err := nosql.RemoveUser(uid, operator)
 	if err == nil {
 		for i := 0;i < len(cacheCtx.users);i += 1 {
 			if cacheCtx.users[i].UID == uid {
@@ -112,17 +114,38 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.UpdateTime = db.UpdatedTime
 	mine.Name = db.Name
 	mine.Remark = db.Remark
+	mine.Type = db.Type
+	mine.Operator = db.Operator
+	mine.Creator = db.Creator
 	datum,err := nosql.GetDatum(db.Datum)
 	if err == nil {
 		mine.Datum.initInfo(datum)
 	}
 }
 
-func (mine *UserInfo)UpdateBase(name, real, phone, remark, job string, sex uint8) error {
-	err := nosql.UpdateUserBase(mine.UID, name, remark)
+func (mine *UserInfo)UpdateBase(name, real, phone, remark, job, operator string, sex uint8) error {
+	if len(name) < 1 {
+		name = mine.Name
+	}
+	if len(remark) <1 {
+		remark = mine.Remark
+	}
+	err := nosql.UpdateUserBase(mine.UID, name, remark, operator)
 	if err != nil {
 		return err
 	}
+	if len(real) < 1 {
+		real = mine.Datum.RealName
+	}
+
+	if len(phone) < 1 {
+		phone = mine.Datum.Phone
+	}
+
+	if len(job) < 1 {
+		job = mine.Datum.Job
+	}
+
 	err1 := nosql.UpdateDatumBase(mine.Datum.UID, real, phone, job, sex)
 	if err1 != nil{
 		return err1
@@ -133,6 +156,7 @@ func (mine *UserInfo)UpdateBase(name, real, phone, remark, job string, sex uint8
 	mine.Datum.Phone = phone
 	mine.Datum.Sex = sex
 	mine.Datum.Job = job
+	mine.Operator = operator
 	mine.UpdateTime = time.Now()
 	return  nil
 }

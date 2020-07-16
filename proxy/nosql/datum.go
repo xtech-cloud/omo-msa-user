@@ -57,7 +57,7 @@ func UpdateDatumCover(uid string, icon string) error {
 	return err
 }
 
-func RemoveDatum(uid string) error {
-	_, err := removeOne(TableDatum, uid)
+func RemoveDatum(uid, operator string) error {
+	_, err := removeOne(TableDatum, uid, operator)
 	return err
 }
