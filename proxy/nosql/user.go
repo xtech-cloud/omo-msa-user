@@ -80,6 +80,20 @@ func GetUserByAccount(uid string) (*User, error) {
 	return model, nil
 }
 
+func GetUserByPhone(phone string) (*User, error) {
+	msg := bson.M{"phone": phone}
+	result, err := findOneBy(TableUser, msg)
+	if err != nil {
+		return nil, err
+	}
+	model := new(User)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
 func UpdateUserBase(uid, name, remark, operator string) error {
 	msg := bson.M{"name": name, "remark": remark, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)

@@ -91,6 +91,22 @@ func GetUserByAccount(account string) *UserInfo {
 	return nil
 }
 
+func GetUserByPhone(phone string) *UserInfo {
+	for i := 0;i < len(cacheCtx.users);i += 1 {
+		if cacheCtx.users[i].Datum.Phone == phone {
+			return cacheCtx.users[i]
+		}
+	}
+	db,err := nosql.GetUserByAccount(phone)
+	if err == nil {
+		user := new(UserInfo)
+		user.initInfo(db)
+		cacheCtx.users = append(cacheCtx.users, user)
+		return user
+	}
+	return nil
+}
+
 func RemoveUser(uid, operator string) error {
 	if len(uid) < 1{
 		return errors.New("the user uid is empty")

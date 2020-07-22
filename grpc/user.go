@@ -2,7 +2,9 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/micro/go-micro/v2/logger"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 )
@@ -10,26 +12,53 @@ import (
 type UserService struct {}
 
 func switchUser(info *cache.UserInfo) *pb.UserInfo {
-	tmp := new(pb.UserInfo)
-	tmp.Job = info.Datum.Job
-	tmp.Uid = info.UID
-	tmp.Id = info.ID
-	tmp.Type = pb.UserType(info.Type)
-	tmp.Account = info.Account
-	tmp.Sex = pb.UserSex(info.Datum.Sex)
-	tmp.Phone = info.Datum.Phone
-	tmp.Name = info.Name
-	tmp.Remark = info.Remark
-	tmp.Created = info.CreateTime.Unix()
-	tmp.Updated = info.UpdateTime.Unix()
-	tmp.RealName = info.Datum.RealName
+	tmp := &pb.UserInfo{
+		Job : info.Datum.Job,
+		Uid : info.UID,
+		Id : info.ID,
+		Type : pb.UserType(info.Type),
+		Account : info.Account,
+		Sex : pb.UserSex(info.Datum.Sex),
+		Phone : info.Datum.Phone,
+		Name : info.Name,
+		Remark : info.Remark,
+		Created : info.CreateTime.Unix(),
+		Updated : info.UpdateTime.Unix(),
+		RealName : info.Datum.RealName,
+	}
 	return tmp
 }
 
+func inLog(name, data interface{})  {
+	bytes, _ := json.Marshal(data)
+	msg := ByteString(bytes)
+	logger.Infof("[in.%s]:data = %s", name, msg)
+}
+
+func ByteString(p []byte) string {
+	for i := 0; i < len(p); i++ {
+		if p[i] == 0 {
+			return string(p[0:i])
+		}
+	}
+	return string(p)
+}
+
 func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
+	inLog("user.add", in)
 	if len(in.Account) < 1 {
 		out.ErrorCode = pb.ResultStatus_Empty
 		return errors.New("the account is empty")
+	}
+	tmp := cache.GetUserByAccount(in.Account)
+	if tmp != nil {
+		out.Info = switchUser(tmp)
+		return nil
+	}
+	tmp1 := cache.GetUserByPhone(in.Phone)
+	if tmp1 != nil {
+		out.Info = switchUser(tmp1)
+		return nil
 	}
 	info := new(cache.DatumInfo)
 	info.RealName = in.Name
@@ -46,6 +75,7 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 }
 
 func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+	inLog("user.getOne", in)
 	if len(in.Uid) < 1 {
 		out.ErrorCode = pb.ResultStatus_Empty
 		return errors.New("the user uid is empty")
@@ -60,6 +90,7 @@ func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.
 }
 
 func (mine *UserService)RemoveOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
+	inLog("user.remove", in)
 	if len(in.Uid) < 1 {
 		out.ErrorCode = pb.ResultStatus_Empty
 		return errors.New("the user uid is empty")
@@ -100,6 +131,7 @@ func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *
 }
 
 func (mine *UserService) GetByAccount (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+	inLog("user.account", in)
 	if len(in.Uid) < 1 {
 		out.ErrorCode = pb.ResultStatus_Empty
 		return errors.New("the user uid is empty")
@@ -113,7 +145,21 @@ func (mine *UserService) GetByAccount (ctx context.Context, in *pb.RequestInfo, 
 	return nil
 }
 
-func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyInfo) error {
+func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+	if len(in.Uid) < 1 {
+		out.ErrorCode = pb.ResultStatus_Empty
+		return errors.New("the user uid is empty")
+	}
+	info := cache.GetUserByAccount(in.Uid)
+	if info == nil {
+		out.ErrorCode = pb.ResultStatus_NotExisted
+		return errors.New("the user not found")
+	}
+	out.Info = switchUser(info)
+	return nil
+}
+
+func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
 	if len(in.Uid) < 1 {
 		out.ErrorCode = pb.ResultStatus_Empty
 		return errors.New("the user uid is empty")
@@ -123,8 +169,11 @@ func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, 
 		out.ErrorCode = pb.ResultStatus_NotExisted
 		return errors.New("the user not found")
 	}
-	info.UpdateBase(in.NickName, in.Name, in.Phone, in.Remark, in.Job, in.Operator, uint8(in.Sex))
-	out.Uid = in.Uid
-	return nil
+	err := info.UpdateBase(in.NickName, in.Name, in.Phone, in.Remark, in.Job, in.Operator, uint8(in.Sex))
+	if err == nil {
+		out.Info = switchUser(info)
+	}
+
+	return err
 }
 

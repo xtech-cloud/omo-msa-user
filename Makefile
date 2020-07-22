@@ -19,7 +19,7 @@ run:
 
 .PHONY: call
 call:
-	MICRO_REGISTRY=consul micro call omo.msa.user UserService.GetByPage '{"number":5, "page":2}'
+	MICRO_REGISTRY=consul micro call omo.msa.user UserService.GetOne '{"uid":"5f1572dec92fdf22d4200927"}'
 
 
 .PHONY: tester
