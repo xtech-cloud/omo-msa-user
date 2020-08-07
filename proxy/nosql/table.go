@@ -1,13 +1,9 @@
 package nosql
 
 const (
+	TableAccount = "accounts"
 	/**
-	管理员数据表
-	*/
-	TableAdmin = "admins"
-
-	/**
-	上传的文件数据表
+	用户数据表
 	*/
 	TableUser = "users"
 

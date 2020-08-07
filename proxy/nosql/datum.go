@@ -13,10 +13,9 @@ type Datum struct {
 	UpdatedTime time.Time          `json:"updatedAt" bson:"updatedAt"`
 	DeleteTime  time.Time          `json:"deleteAt" bson:"deleteAt"`
 
-	Name   string `json:"name" bson:"name"`  //真名
-	Phone  string `json:"phone" bson:"phone"`
 	Job    string `json:"job" bson:"job"`
 	Sex    uint8  `json:"sex" bson:"sex"`
+	User   string `json:"user" bson:"user"`
 }
 
 func CreateDatum(info *Datum) error {

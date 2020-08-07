@@ -20,7 +20,9 @@ type User struct {
 	Account string `json:"account" bson:"account"`
 	Remark  string `json:"remark" bson:"remark"`
 	Type    uint8  `json:"type" bson:"type"`
-	Datum   string `json:"datum" bson:"datum"`
+	Nick    string `json:"nick" bson:"nick"`
+	Phone string `json:"phone" bson:"phone"`
+	Sex uint8 `json:"sex" bson:"sex"`
 }
 
 func CreateUser(info *User) error {
@@ -66,18 +68,22 @@ func GetAllUsers() ([]*User, error) {
 	return items, nil
 }
 
-func GetUserByAccount(uid string) (*User, error) {
+func GetUsersByAccount(uid string) ([]*User, error) {
 	msg := bson.M{"account": uid}
-	result, err := findOneBy(TableUser, msg)
+	cursor, err := findMany(TableUser, msg, 0)
 	if err != nil {
 		return nil, err
 	}
-	model := new(User)
-	err1 := result.Decode(model)
-	if err1 != nil {
-		return nil, err1
+	var items = make([]*User, 0, 200)
+	for cursor.Next(context.Background()) {
+		var node = new(User)
+		if err := cursor.Decode(node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
 	}
-	return model, nil
+	return items, nil
 }
 
 func GetUserByPhone(phone string) (*User, error) {
@@ -94,8 +100,14 @@ func GetUserByPhone(phone string) (*User, error) {
 	return model, nil
 }
 
-func UpdateUserBase(uid, name, remark, operator string) error {
-	msg := bson.M{"name": name, "remark": remark, "operator": operator, "updatedAt": time.Now()}
+func UpdateUserBase(uid, name, nick, remark, operator string, sex uint8) error {
+	msg := bson.M{"name": name, "nick": nick, "remark": remark,"sex":sex, "operator": operator, "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserPhone(uid, phone, operator string) error {
+	msg := bson.M{"phone": phone,"operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

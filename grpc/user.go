@@ -13,7 +13,6 @@ type UserService struct {}
 
 func switchUser(info *cache.UserInfo) *pb.UserInfo {
 	tmp := &pb.UserInfo{
-		Job : info.Datum.Job,
 		Uid : info.UID,
 		Id : info.ID,
 		Type : pb.UserType(info.Type),
@@ -177,3 +176,16 @@ func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, 
 	return err
 }
 
+func (mine *UserService) UpdatePasswords (ctx context.Context, in *pb.ReqUserPasswords, out *pb.ReplyInfo) error {
+	if len(in.Uid) < 1 {
+		out.ErrorCode = pb.ResultStatus_Empty
+		return errors.New("the user uid is empty")
+	}
+	info := cache.GetUser(in.Uid)
+	if info == nil {
+		out.ErrorCode = pb.ResultStatus_NotExisted
+		return errors.New("the user not found")
+	}
+	err := info.UpdatePasswords(in.Passwords, in.Operator)
+	return err
+}
