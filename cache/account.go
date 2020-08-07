@@ -52,6 +52,9 @@ func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
 }
 
 func (mine *AccountInfo)CreateUser(name, remark, nick, phone string, tp uint8, sex uint8) (*UserInfo, error) {
+	if len(mine.Users) > 0 {
+		return mine.Users[0],nil
+	}
 	db := new(nosql.User)
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetUserNextID()
@@ -86,6 +89,10 @@ func (mine *AccountInfo)createDatum(info *DatumInfo) error {
 	return err
 }
 
+func (mine *AccountInfo)DefaultUser() *UserInfo {
+	return mine.Users[0]
+}
+
 func (mine *AccountInfo)AllUsers() []*UserInfo {
 	return mine.Users
 }
@@ -106,9 +113,18 @@ func (mine *AccountInfo)GetUser(uid string) *UserInfo {
 	return nil
 }
 
+func (mine *AccountInfo)HadUser(user string) bool {
+	info := mine.GetUser(user)
+	if info == nil {
+		return false
+	}else{
+		return true
+	}
+}
+
 func (mine *AccountInfo)GetUserByPhone(phone string) *UserInfo {
 	for i := 0;i < len(mine.Users);i += 1 {
-		if mine.Users[i].Datum.Phone == phone {
+		if mine.Users[i].Phone == phone {
 			return mine.Users[i]
 		}
 	}

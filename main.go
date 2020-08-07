@@ -35,6 +35,7 @@ func main() {
 	service.Init()
 	// Register Handler
 	_ = proto.RegisterUserServiceHandler(service.Server(), new(grpc.UserService))
+	_ = proto.RegisterAccountServiceHandler(service.Server(), new(grpc.AccountService))
 
 	app, _ := filepath.Abs(os.Args[0])
 

@@ -28,6 +28,7 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.Sex = db.Sex
 	mine.Phone = db.Phone
 	mine.NickName = db.Nick
+	mine.Account = db.Account
 }
 
 func (mine *UserInfo)UpdateBase(name, nick, remark, operator string, sex uint8) error {

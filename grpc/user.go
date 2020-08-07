@@ -2,9 +2,6 @@ package grpc
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"github.com/micro/go-micro/v2/logger"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 )
@@ -17,104 +14,109 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Id : info.ID,
 		Type : pb.UserType(info.Type),
 		Account : info.Account,
-		Sex : pb.UserSex(info.Datum.Sex),
-		Phone : info.Datum.Phone,
+		Sex : pb.UserSex(info.Sex),
+		Phone : info.Phone,
 		Name : info.Name,
 		Remark : info.Remark,
 		Created : info.CreateTime.Unix(),
 		Updated : info.UpdateTime.Unix(),
-		RealName : info.Datum.RealName,
+		Nick : info.NickName,
 	}
 	return tmp
 }
 
-func inLog(name, data interface{})  {
-	bytes, _ := json.Marshal(data)
-	msg := ByteString(bytes)
-	logger.Infof("[in.%s]:data = %s", name, msg)
-}
-
-func ByteString(p []byte) string {
-	for i := 0; i < len(p); i++ {
-		if p[i] == 0 {
-			return string(p[0:i])
+func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
+	path := "user.add"
+	inLog(path, in)
+	var err error
+	var account *cache.AccountInfo
+	if len(in.Account) > 0 {
+		account = cache.Context().GetAccount(in.Account)
+		if account == nil {
+			out.Status = outError(path,"the account not found ", pb.ResultCode_NotExisted)
+			return nil
+		}
+	}else{
+		if in.Type == pb.UserType_SuperRoot {
+			account, err = cache.Context().CreateAccount(in.Name, in.Passwords, in.Operator)
+		}else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
+			account, err = cache.Context().CreateAccount(in.Phone, in.Passwords, in.Operator)
+		}else{
+			account, err = cache.Context().CreateAccount(in.Phone, in.Passwords, in.Operator)
+		}
+		if err != nil {
+			out.Status = outError(path,"the account create failed ", pb.ResultCode_DBException)
+			return nil
 		}
 	}
-	return string(p)
-}
 
-func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
-	inLog("user.add", in)
-	if len(in.Account) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the account is empty")
-	}
-	tmp := cache.GetUserByAccount(in.Account)
-	if tmp != nil {
-		out.Info = switchUser(tmp)
+	user,err1 := account.CreateUser(in.Name, in.Remark, in.Nick, in.Phone, uint8(in.Type), uint8(in.Sex))
+	if err1 != nil {
+		out.Status = outError(path,err1.Error(), pb.ResultCode_DBException)
 		return nil
 	}
-	tmp1 := cache.GetUserByPhone(in.Phone)
-	if tmp1 != nil {
-		out.Info = switchUser(tmp1)
-		return nil
-	}
-	info := new(cache.DatumInfo)
-	info.RealName = in.Name
-	info.Phone = in.Phone
-	info.Sex = uint8(in.Sex)
-	user,err := cache.CreateUser(in.Account, in.NickName, in.Remark, uint8(in.Type), info)
-	if err == nil {
-		out.Info = switchUser(user)
-	}else{
-		out.ErrorCode = pb.ResultStatus_DBException
-	}
-
-	return err
+	out.Info = switchUser(user)
+	out.Status = outLog(path, out)
+	return nil
 }
 
 func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
-	inLog("user.getOne", in)
+	path := "user.get"
+	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
 	}
-	info := cache.GetUser(in.Uid)
+	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.ErrorCode = pb.ResultStatus_NotExisted
-		return errors.New("the user not found")
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
 	}
 	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
 	return nil
 }
 
 func (mine *UserService)RemoveOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
-	inLog("user.remove", in)
+	path := "user.remove"
+	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
 	}
-	err := cache.RemoveUser(in.Uid, in.Operator)
+	account := cache.Context().GetAccountByUser(in.Uid)
+	if account == nil {
+		out.Status = outError(path,"the account not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	err := account.RemoveUser(in.Uid, in.Operator)
 	if err != nil {
-		out.ErrorCode = pb.ResultStatus_DBException
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		return nil
 	}
+	out.Status = outLog(path, out)
 	return err
 }
 
 func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb.ReplyUserList) error {
+	path := "user.list"
+	inLog(path, in)
 	out.List = make([]*pb.UserInfo, 0, len(in.List))
 	for _, value := range in.List {
-		info := cache.GetUser(value)
+		info := cache.Context().GetUser(value)
 		if info != nil {
 			out.List = append(out.List, switchUser(info))
 		}
 	}
+	out.Status = outLog(path, out)
 	return nil
 }
 
 func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *pb.ReplyUserList) error {
+	path := "user.getByPage"
+	inLog(path, in)
 	out.List = make([]*pb.UserInfo, 0, in.Number)
-	users := cache.AllUsers()
+	users := cache.Context().AllUsers()
 	total := uint32(len(users))
 	out.PageMax = total / in.Number + 1
 	var i uint32 = 0
@@ -126,66 +128,45 @@ func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *
 	}
 	out.PageNow = in.Page
 	out.Total = uint64(total)
-	return nil
-}
-
-func (mine *UserService) GetByAccount (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
-	inLog("user.account", in)
-	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
-	}
-	info := cache.GetUserByAccount(in.Uid)
-	if info == nil {
-		out.ErrorCode = pb.ResultStatus_NotExisted
-		return errors.New("the user not found")
-	}
-	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
 	return nil
 }
 
 func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+	path := "user.getByPhone"
+	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
 	}
-	info := cache.GetUserByAccount(in.Uid)
+	info := cache.Context().GetUserByPhone(in.Uid)
 	if info == nil {
-		out.ErrorCode = pb.ResultStatus_NotExisted
-		return errors.New("the user not found")
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
 	}
 	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
 	return nil
 }
 
 func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
+	path := "user.update"
+	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
 	}
-	info := cache.GetUser(in.Uid)
+	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.ErrorCode = pb.ResultStatus_NotExisted
-		return errors.New("the user not found")
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
 	}
-	err := info.UpdateBase(in.NickName, in.Name, in.Phone, in.Remark, in.Job, in.Operator, uint8(in.Sex))
-	if err == nil {
-		out.Info = switchUser(info)
+	err := info.UpdateBase(in.Name, in.NickName, in.Remark, in.Operator, uint8(in.Sex))
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_NotExisted)
+		return nil
 	}
-
-	return err
-}
-
-func (mine *UserService) UpdatePasswords (ctx context.Context, in *pb.ReqUserPasswords, out *pb.ReplyInfo) error {
-	if len(in.Uid) < 1 {
-		out.ErrorCode = pb.ResultStatus_Empty
-		return errors.New("the user uid is empty")
-	}
-	info := cache.GetUser(in.Uid)
-	if info == nil {
-		out.ErrorCode = pb.ResultStatus_NotExisted
-		return errors.New("the user not found")
-	}
-	err := info.UpdatePasswords(in.Passwords, in.Operator)
+	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
 	return err
 }

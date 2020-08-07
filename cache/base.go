@@ -12,8 +12,8 @@ type BaseInfo struct {
 	ID         uint64 `json:"-"`
 	UID        string `json:"uid"`
 	Name       string `json:"name"`
-	Creator string
-	Operator string
+	Creator    string
+	Operator   string
 	CreateTime time.Time
 	UpdateTime time.Time
 }
@@ -40,12 +40,17 @@ func Context() *cacheContext {
 	return cacheCtx
 }
 
-func (mine *cacheContext)CreateAccount(phone, psw, operator string) (*AccountInfo,error) {
+func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInfo, error) {
+	account := mine.getAccountByName(name)
+	if account != nil {
+		return account,nil
+	}
+
 	db := new(nosql.Account)
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetAccountNextID()
 	db.CreatedTime = time.Now()
-	db.Name = phone
+	db.Name = name
 	db.Passwords = psw
 	db.Creator = operator
 	err := nosql.CreateAccount(db)
@@ -55,19 +60,19 @@ func (mine *cacheContext)CreateAccount(phone, psw, operator string) (*AccountInf
 		mine.accounts = append(mine.accounts, info)
 		return info, nil
 	}
-	return nil,err
+	return nil, err
 }
 
-func (mine *cacheContext)GetUser(uid string) *UserInfo {
+func (mine *cacheContext) GetUser(uid string) *UserInfo {
 	for _, account := range mine.accounts {
 		info := account.GetUser(uid)
 		if info != nil {
 			return info
 		}
 	}
-	db,err := nosql.GetUser(uid)
+	db, err := nosql.GetUser(uid)
 	if err == nil {
-		account := mine.getAccount(db.Account)
+		account := mine.GetAccount(db.Account)
 		if account != nil {
 			return account.GetUser(uid)
 		}
@@ -75,13 +80,29 @@ func (mine *cacheContext)GetUser(uid string) *UserInfo {
 	return nil
 }
 
-func (mine *cacheContext)getAccount(uid string) *AccountInfo {
+func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
+	for _, account := range mine.accounts {
+		info := account.GetUserByPhone(phone)
+		if info != nil {
+			return info
+		}
+	}
+	db, err := nosql.GetUserByPhone(phone)
+	if err == nil {
+		info := new(UserInfo)
+		info.initInfo(db)
+		return info
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetAccount(uid string) *AccountInfo {
 	for _, account := range mine.accounts {
 		if account.UID == uid {
 			return account
 		}
 	}
-	db,err := nosql.GetAccount(uid)
+	db, err := nosql.GetAccount(uid)
 	if err == nil {
 		info := new(AccountInfo)
 		info.initInfo(db)
@@ -91,13 +112,29 @@ func (mine *cacheContext)getAccount(uid string) *AccountInfo {
 	return nil
 }
 
-func (mine *cacheContext)getAccountByName(name string) *AccountInfo {
+func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
+	for _, account := range mine.accounts {
+		if account.HadUser(user) {
+			return account
+		}
+	}
+	db, err := nosql.GetUser(user)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			return account
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) getAccountByName(name string) *AccountInfo {
 	for _, account := range mine.accounts {
 		if account.Name == name {
 			return account
 		}
 	}
-	db,err := nosql.GetAccountByName(name)
+	db, err := nosql.GetAccountByName(name)
 	if err == nil {
 		info := new(AccountInfo)
 		info.initInfo(db)
@@ -107,14 +144,21 @@ func (mine *cacheContext)getAccountByName(name string) *AccountInfo {
 	return nil
 }
 
-func (mine *cacheContext)SignIn(name, psw string) (bool,error) {
+func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 	account := mine.getAccountByName(name)
 	if account == nil {
-		return false, errors.New("not found the account")
+		return "", errors.New("not found the account")
 	}
 	if account.Passwords != psw {
-		return false, errors.New("the passwords valid failed")
+		return "", errors.New("the passwords valid failed")
 	}
-	return true,nil
+	return account.DefaultUser().UID, nil
 }
 
+func (mine *cacheContext) AllUsers() []*UserInfo {
+	list := make([]*UserInfo, 0, 10)
+	for _, account := range mine.accounts {
+		list = append(list, account.Users...)
+	}
+	return list
+}
