@@ -13,6 +13,7 @@ type UserInfo struct {
 	Remark string
 	Phone string
 	Sex uint8
+	Entity string
 }
 
 func (mine *UserInfo)initInfo(db *nosql.User)  {
@@ -29,6 +30,7 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.Phone = db.Phone
 	mine.NickName = db.Nick
 	mine.Account = db.Account
+	mine.Entity = db.Entity
 }
 
 func (mine *UserInfo)UpdateBase(name, nick, remark, operator string, sex uint8) error {
@@ -58,6 +60,18 @@ func (mine *UserInfo)UpdatePhone(phone, operator string) error {
 	err := nosql.UpdateUserPhone(mine.UID, phone, operator)
 	if err == nil {
 		mine.Phone = phone
+		mine.Operator = operator
+	}
+	return err
+}
+
+func (mine *UserInfo)UpdateEntity(entity, operator string) error {
+	if operator == ""{
+		operator = mine.Operator
+	}
+	err := nosql.UpdateUserEntity(mine.UID, entity, operator)
+	if err == nil {
+		mine.Entity = entity
 		mine.Operator = operator
 	}
 	return err

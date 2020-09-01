@@ -51,7 +51,7 @@ func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
 	return err
 }
 
-func (mine *AccountInfo)CreateUser(name, remark, nick, phone string, tp uint8, sex uint8) (*UserInfo, error) {
+func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, operator string, tp uint8, sex uint8) (*UserInfo, error) {
 	if len(mine.Users) > 0 {
 		return mine.Users[0],nil
 	}
@@ -59,6 +59,7 @@ func (mine *AccountInfo)CreateUser(name, remark, nick, phone string, tp uint8, s
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetUserNextID()
 	db.CreatedTime = time.Now()
+	db.Creator = operator
 	db.Name = name
 	db.Type = tp
 	db.Account = mine.UID
@@ -66,6 +67,7 @@ func (mine *AccountInfo)CreateUser(name, remark, nick, phone string, tp uint8, s
 	db.Nick = nick
 	db.Phone = phone
 	db.Sex = sex
+	db.Entity = entity
 	err := nosql.CreateUser(db)
 	if err == nil {
 		user :=new(UserInfo)
@@ -103,12 +105,14 @@ func (mine *AccountInfo)GetUser(uid string) *UserInfo {
 			return mine.Users[i]
 		}
 	}
-	db,err := nosql.GetUser(uid)
-	if err == nil {
-		user := new(UserInfo)
-		user.initInfo(db)
-		mine.Users = append(mine.Users, user)
-		return user
+	return nil
+}
+
+func (mine *AccountInfo)GetUserByEntity(entity string) *UserInfo {
+	for i := 0;i < len(mine.Users);i += 1 {
+		if mine.Users[i].Entity == entity {
+			return mine.Users[i]
+		}
 	}
 	return nil
 }

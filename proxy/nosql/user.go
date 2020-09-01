@@ -21,8 +21,9 @@ type User struct {
 	Remark  string `json:"remark" bson:"remark"`
 	Type    uint8  `json:"type" bson:"type"`
 	Nick    string `json:"nick" bson:"nick"`
-	Phone string `json:"phone" bson:"phone"`
-	Sex uint8 `json:"sex" bson:"sex"`
+	Phone   string `json:"phone" bson:"phone"`
+	Sex     uint8  `json:"sex" bson:"sex"`
+	Entity  string `json:"entity" bson:"entity"`
 }
 
 func CreateUser(info *User) error {
@@ -100,14 +101,34 @@ func GetUserByPhone(phone string) (*User, error) {
 	return model, nil
 }
 
+func GetUserByEntity(entity string) (*User, error) {
+	msg := bson.M{"entity": entity}
+	result, err := findOneBy(TableUser, msg)
+	if err != nil {
+		return nil, err
+	}
+	model := new(User)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
 func UpdateUserBase(uid, name, nick, remark, operator string, sex uint8) error {
-	msg := bson.M{"name": name, "nick": nick, "remark": remark,"sex":sex, "operator": operator, "updatedAt": time.Now()}
+	msg := bson.M{"name": name, "nick": nick, "remark": remark, "sex": sex, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
 
 func UpdateUserPhone(uid, phone, operator string) error {
-	msg := bson.M{"phone": phone,"operator": operator, "updatedAt": time.Now()}
+	msg := bson.M{"phone": phone, "operator": operator, "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserEntity(uid, entity, operator string) error {
+	msg := bson.M{"entity": entity, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

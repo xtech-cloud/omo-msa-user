@@ -41,6 +41,9 @@ func Context() *cacheContext {
 }
 
 func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInfo, error) {
+	if len(name) < 1 {
+		return nil, errors.New("the account name is empty")
+	}
 	account := mine.getAccountByName(name)
 	if account != nil {
 		return account,nil
@@ -70,11 +73,38 @@ func (mine *cacheContext) GetUser(uid string) *UserInfo {
 			return info
 		}
 	}
+
 	db, err := nosql.GetUser(uid)
 	if err == nil {
 		account := mine.GetAccount(db.Account)
 		if account != nil {
-			return account.GetUser(uid)
+			user := new(UserInfo)
+			user.initInfo(db)
+			account.Users = append(account.Users, user)
+			return user
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
+	for _, account := range mine.accounts {
+		info := account.GetUser(entity)
+		if info != nil {
+			return info
+		}
+	}
+	db, err := nosql.GetUserByEntity(entity)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			db,err := nosql.GetUserByEntity(entity)
+			if err == nil {
+				user := new(UserInfo)
+				user.initInfo(db)
+				account.Users = append(account.Users, user)
+				return user
+			}
 		}
 	}
 	return nil
