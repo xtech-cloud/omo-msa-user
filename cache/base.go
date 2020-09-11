@@ -20,6 +20,7 @@ type BaseInfo struct {
 
 type cacheContext struct {
 	accounts []*AccountInfo
+	wechats []*WechatInfo
 }
 
 var cacheCtx *cacheContext
@@ -125,6 +126,22 @@ func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
 	}
 	return nil
 }
+
+func (mine *cacheContext) GetUserBySNS(uid string, kind uint8) *UserInfo {
+	for _, account := range mine.accounts {
+		if account.DefaultUser().HadSNS(uid) {
+			return account.DefaultUser()
+		}
+	}
+	db, err := nosql.GetUserBySNS(uid)
+	if err == nil {
+		info := new(UserInfo)
+		info.initInfo(db)
+		return info
+	}
+	return nil
+}
+
 
 func (mine *cacheContext) GetAccount(uid string) *AccountInfo {
 	for _, account := range mine.accounts {

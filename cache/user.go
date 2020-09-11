@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"errors"
+	"omo.msa.user/proxy"
 	"omo.msa.user/proxy/nosql"
 	"time"
 )
@@ -14,6 +16,7 @@ type UserInfo struct {
 	Phone string
 	Sex uint8
 	Entity string
+	SNS []proxy.SNSInfo
 }
 
 func (mine *UserInfo)initInfo(db *nosql.User)  {
@@ -31,6 +34,10 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.NickName = db.Nick
 	mine.Account = db.Account
 	mine.Entity = db.Entity
+	mine.SNS = db.SNS
+	if mine.SNS == nil {
+		mine.SNS = make([]proxy.SNSInfo, 0, 1)
+	}
 }
 
 func (mine *UserInfo)UpdateBase(name, nick, remark, operator string, sex uint8) error {
@@ -73,6 +80,49 @@ func (mine *UserInfo)UpdateEntity(entity, operator string) error {
 	if err == nil {
 		mine.Entity = entity
 		mine.Operator = operator
+	}
+	return err
+}
+
+func (mine *UserInfo)HadSNS(uid string) bool {
+	for _, sn := range mine.SNS {
+		if sn.UID == uid {
+			return true
+		}
+	}
+	return false
+}
+
+func (mine *UserInfo)AppendSNS(uid, name string, kind uint8) error {
+	if uid == "" {
+		return errors.New("the sns uid is empty")
+	}
+	if mine.HadSNS(uid) {
+		return nil
+	}
+	tmp := proxy.SNSInfo{UID: uid, Name: name, Type: kind}
+	err := nosql.AppendUserSNS(mine.UID, tmp)
+	if err == nil {
+		mine.SNS = append(mine.SNS, tmp)
+	}
+	return err
+}
+
+func (mine *UserInfo)SubtractSNS(uid string) error {
+	if uid == "" {
+		return errors.New("the sns uid is empty")
+	}
+	if !mine.HadSNS(uid) {
+		return nil
+	}
+	err := nosql.SubtractUserSNS(mine.UID, uid)
+	if err == nil {
+		for i := 0; i < len(mine.SNS);i += 1 {
+			if mine.SNS[i].UID == uid {
+				mine.SNS = append(mine.SNS[:i], mine.SNS[i:]...)
+				break
+			}
+		}
 	}
 	return err
 }

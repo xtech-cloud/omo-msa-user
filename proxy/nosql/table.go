@@ -17,4 +17,5 @@ const (
 	*/
 	TableAddress = "address"
 	TableDatum = "datums"
+	TableWechat = "wechat"
 )

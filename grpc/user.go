@@ -62,6 +62,13 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 		out.Status = outError(path,err1.Error(), pb.ResultCode_DBException)
 		return nil
 	}
+	if in.Sns != nil {
+		er := user.AppendSNS(in.Sns.Uid, in.Sns.Name, uint8(in.Sns.Type))
+		if er != nil {
+			out.Status = outError(path,er.Error(), pb.ResultCode_DBException)
+			return nil
+		}
+	}
 	out.Info = switchUser(user)
 	out.Status = outLog(path, out)
 	return nil
@@ -141,6 +148,23 @@ func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *
 	return nil
 }
 
+func (mine *UserService) GetBySNS (ctx context.Context, in *pb.ReqUserBy, out *pb.ReplyUserOne) error {
+	path := "user.getBySNS"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the sns uid is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUserBySNS(in.Uid, uint8(in.Type))
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
+	return nil
+}
+
 func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
 	path := "user.getByPhone"
 	inLog(path, in)
@@ -157,6 +181,7 @@ func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, ou
 	out.Status = outLog(path, out)
 	return nil
 }
+
 
 func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
 	path := "user.update"
@@ -193,6 +218,33 @@ func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity
 		return nil
 	}
 	err := info.UpdateEntity(in.Entity, "")
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_NotExisted)
+		return nil
+	}
+	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
+	return err
+}
+
+func (mine *UserService) UpdateSNS (ctx context.Context, in *pb.ReqUserSNS, out *pb.ReplyUserOne) error {
+	path := "user.update"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUser(in.User)
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	var err error
+	if in.Add {
+		err = info.AppendSNS(in.Uid, in.Name, uint8(in.Type))
+	}else{
+		err = info.SubtractSNS(in.Uid)
+	}
 	if err != nil {
 		out.Status = outError(path,err.Error(), pb.ResultCode_NotExisted)
 		return nil

@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"omo.msa.user/proxy"
 	"omo.msa.user/proxy/nosql"
 	"time"
 )
@@ -68,6 +69,7 @@ func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, operator s
 	db.Phone = phone
 	db.Sex = sex
 	db.Entity = entity
+	db.SNS = make([]proxy.SNSInfo, 0, 1)
 	err := nosql.CreateUser(db)
 	if err == nil {
 		user :=new(UserInfo)

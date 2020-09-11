@@ -2,8 +2,10 @@ package nosql
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"omo.msa.user/proxy"
 	"time"
 )
 
@@ -24,6 +26,7 @@ type User struct {
 	Phone   string `json:"phone" bson:"phone"`
 	Sex     uint8  `json:"sex" bson:"sex"`
 	Entity  string `json:"entity" bson:"entity"`
+	SNS     []proxy.SNSInfo `json:"sns" bson:"sns"`
 }
 
 func CreateUser(info *User) error {
@@ -115,6 +118,20 @@ func GetUserByEntity(entity string) (*User, error) {
 	return model, nil
 }
 
+func GetUserBySNS(uid string) (*User, error) {
+	msg := bson.M{"sns.uid": uid}
+	result, err := findOneBy(TableUser, msg)
+	if err != nil {
+		return nil, err
+	}
+	model := new(User)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
 func UpdateUserBase(uid, name, nick, remark, operator string, sex uint8) error {
 	msg := bson.M{"name": name, "nick": nick, "remark": remark, "sex": sex, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
@@ -141,5 +158,23 @@ func UpdateUserCover(uid string, icon string) error {
 
 func RemoveUser(uid, operator string) error {
 	_, err := removeOne(TableUser, uid, operator)
+	return err
+}
+
+func AppendUserSNS(uid string, sns proxy.SNSInfo) error {
+	if len(uid) < 1 {
+		return errors.New("the uid is empty")
+	}
+	msg := bson.M{"sns": sns}
+	_, err := appendElement(TableUser, uid, msg)
+	return err
+}
+
+func SubtractUserSNS(uid, sns string) error {
+	if len(uid) < 1 {
+		return errors.New("the uid is empty")
+	}
+	msg := bson.M{"sns": bson.M{"uid": sns}}
+	_, err := removeElement(TableUser, uid, msg)
 	return err
 }

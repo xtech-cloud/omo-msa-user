@@ -36,6 +36,7 @@ func main() {
 	// Register Handler
 	_ = proto.RegisterUserServiceHandler(service.Server(), new(grpc.UserService))
 	_ = proto.RegisterAccountServiceHandler(service.Server(), new(grpc.AccountService))
+	_ = proto.RegisterWechatServiceHandler(service.Server(), new(grpc.WechatService))
 
 	app, _ := filepath.Abs(os.Args[0])
 
