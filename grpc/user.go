@@ -182,6 +182,22 @@ func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, ou
 	return nil
 }
 
+func (mine *UserService) GetByEntity (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+	path := "user.getByPhone"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the entity is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUserByEntity(in.Uid)
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
+	return nil
+}
 
 func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
 	path := "user.update"
