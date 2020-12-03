@@ -88,6 +88,27 @@ func (mine *cacheContext) GetUser(uid string) *UserInfo {
 	return nil
 }
 
+func (mine *cacheContext) GetUserByID(id uint64) *UserInfo {
+	for _, account := range mine.accounts {
+		info := account.GetUserByID(id)
+		if info != nil {
+			return info
+		}
+	}
+
+	db, err := nosql.GetUserByID(id)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			user := new(UserInfo)
+			user.initInfo(db)
+			account.Users = append(account.Users, user)
+			return user
+		}
+	}
+	return nil
+}
+
 func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
 	for _, account := range mine.accounts {
 		info := account.GetUser(entity)

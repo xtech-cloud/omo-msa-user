@@ -26,6 +26,7 @@ type User struct {
 	Phone   string `json:"phone" bson:"phone"`
 	Sex     uint8  `json:"sex" bson:"sex"`
 	Entity  string `json:"entity" bson:"entity"`
+	Portrait string `json:"portrait" bson:"portrait"`
 	SNS     []proxy.SNSInfo `json:"sns" bson:"sns"`
 }
 
@@ -44,6 +45,20 @@ func GetUserNextID() uint64 {
 
 func GetUser(uid string) (*User, error) {
 	result, err := findOne(TableUser, uid)
+	if err != nil {
+		return nil, err
+	}
+	model := new(User)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
+func GetUserByID(id uint64) (*User, error) {
+	msg := bson.M{"id": id}
+	result, err := findOneBy(TableUser, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +147,8 @@ func GetUserBySNS(uid string) (*User, error) {
 	return model, nil
 }
 
-func UpdateUserBase(uid, name, nick, remark, operator string, sex uint8) error {
-	msg := bson.M{"name": name, "nick": nick, "remark": remark, "sex": sex, "operator": operator, "updatedAt": time.Now()}
+func UpdateUserBase(uid, name, nick, remark, portrait, operator string, sex uint8) error {
+	msg := bson.M{"name": name, "nick": nick, "remark": remark, "portrait": portrait, "sex": sex, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
@@ -150,8 +165,8 @@ func UpdateUserEntity(uid, entity, operator string) error {
 	return err
 }
 
-func UpdateUserCover(uid string, icon string) error {
-	msg := bson.M{"cover": icon, "updatedAt": time.Now()}
+func UpdateUserPortrait(uid string, icon, operator string) error {
+	msg := bson.M{"portrait": icon, "operator": operator,  "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

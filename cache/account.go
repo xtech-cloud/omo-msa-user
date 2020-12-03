@@ -52,7 +52,7 @@ func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
 	return err
 }
 
-func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, operator string, tp uint8, sex uint8) (*UserInfo, error) {
+func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, portrait, operator string, tp, sex uint8) (*UserInfo, error) {
 	if len(mine.Users) > 0 {
 		return mine.Users[0],nil
 	}
@@ -68,6 +68,7 @@ func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, operator s
 	db.Nick = nick
 	db.Phone = phone
 	db.Sex = sex
+	db.Portrait = portrait
 	db.Entity = entity
 	db.SNS = make([]proxy.SNSInfo, 0, 1)
 	err := nosql.CreateUser(db)
@@ -104,6 +105,15 @@ func (mine *AccountInfo)AllUsers() []*UserInfo {
 func (mine *AccountInfo)GetUser(uid string) *UserInfo {
 	for i := 0;i < len(mine.Users);i += 1 {
 		if mine.Users[i].UID == uid {
+			return mine.Users[i]
+		}
+	}
+	return nil
+}
+
+func (mine *AccountInfo)GetUserByID(id uint64) *UserInfo {
+	for i := 0;i < len(mine.Users);i += 1 {
+		if mine.Users[i].ID == id {
 			return mine.Users[i]
 		}
 	}
