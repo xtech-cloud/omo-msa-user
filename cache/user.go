@@ -17,6 +17,7 @@ type UserInfo struct {
 	Sex uint8
 	Entity string
 	Portrait string
+	Tags []string
 	SNS []proxy.SNSInfo
 }
 
@@ -36,6 +37,10 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.Account = db.Account
 	mine.Entity = db.Entity
 	mine.Portrait = db.Portrait
+	mine.Tags = db.Tags
+	if mine.Tags == nil {
+		mine.Tags = make([]string, 0 ,5)
+	}
 	mine.SNS = db.SNS
 	if mine.SNS == nil {
 		mine.SNS = make([]proxy.SNSInfo, 0, 1)
@@ -103,6 +108,21 @@ func (mine *UserInfo)UpdateEntity(entity, operator string) error {
 	err := nosql.UpdateUserEntity(mine.UID, entity, operator)
 	if err == nil {
 		mine.Entity = entity
+		mine.Operator = operator
+	}
+	return err
+}
+
+func (mine *UserInfo)UpdateTags(operator string, tags []string) error {
+	if tags == nil {
+		return nil
+	}
+	if operator == ""{
+		operator = mine.Operator
+	}
+	err := nosql.UpdateUserTags(mine.UID, operator, tags)
+	if err == nil {
+		mine.Tags = tags
 		mine.Operator = operator
 	}
 	return err

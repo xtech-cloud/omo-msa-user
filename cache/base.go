@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"omo.msa.user/config"
 	"omo.msa.user/proxy/nosql"
@@ -150,7 +151,7 @@ func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
 
 func (mine *cacheContext) GetUserBySNS(uid string, kind uint8) *UserInfo {
 	for _, account := range mine.accounts {
-		if account.DefaultUser().HadSNS(uid) {
+		if account.DefaultUser() != nil && account.DefaultUser().HadSNS(uid) {
 			return account.DefaultUser()
 		}
 	}
@@ -196,6 +197,17 @@ func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
 	return nil
 }
 
+func (mine *cacheContext)RemoveUser(user, operator string) error {
+	for _, account := range mine.accounts {
+		for i := 0;i < len(account.Users);i += 1 {
+			if account.Users[i].UID == user {
+				return account.RemoveUser(user, operator)
+			}
+		}
+	}
+	return nil
+}
+
 func (mine *cacheContext) getAccountByName(name string) *AccountInfo {
 	for _, account := range mine.accounts {
 		if account.Name == name {
@@ -212,6 +224,15 @@ func (mine *cacheContext) getAccountByName(name string) *AccountInfo {
 	return nil
 }
 
+func removeAccount(uid string) {
+	for i := 0;i < len(cacheCtx.accounts);i += 1 {
+		if cacheCtx.accounts[i].UID == uid {
+			cacheCtx.accounts = append(cacheCtx.accounts[:i], cacheCtx.accounts[i+1:]...)
+			break
+		}
+	}
+}
+
 func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 	account := mine.getAccountByName(name)
 	if account == nil {
@@ -224,9 +245,46 @@ func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 }
 
 func (mine *cacheContext) AllUsers() []*UserInfo {
-	list := make([]*UserInfo, 0, 10)
+	list := make([]*UserInfo, 0, 100)
 	for _, account := range mine.accounts {
 		list = append(list, account.Users...)
 	}
 	return list
+}
+
+func (mine *cacheContext) SearchUsers(kind pb.UserType, tags []string) []*UserInfo {
+	list := make([]*UserInfo, 0, 10)
+	ty := uint8(kind)
+	if kind < 1 {
+		return list
+	}
+	users,err := nosql.GetUsersByType(ty)
+	if err != nil {
+		return list
+	}
+	for _, user := range users {
+		if hadKey(user.Tags, tags){
+			info := new(UserInfo)
+			info.initInfo(user)
+			list = append(list, info)
+		}
+	}
+	return list
+}
+
+func hadKey(source []string, dest []string) bool {
+	if dest == nil || len(dest) < 1 {
+		return true
+	}
+	if source == nil || len(source) < 1 {
+		return true
+	}
+	for _, k := range dest {
+		for _, c := range source {
+			if k == c {
+				return true
+			}
+		}
+	}
+	return false
 }

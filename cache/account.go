@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/pkg/errors"
+	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"omo.msa.user/proxy"
 	"omo.msa.user/proxy/nosql"
@@ -52,7 +53,7 @@ func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
 	return err
 }
 
-func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, portrait, operator string, tp, sex uint8) (*UserInfo, error) {
+func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
 	if len(mine.Users) > 0 {
 		return mine.Users[0],nil
 	}
@@ -60,16 +61,20 @@ func (mine *AccountInfo)CreateUser(name, remark, nick, phone, entity, portrait, 
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetUserNextID()
 	db.CreatedTime = time.Now()
-	db.Creator = operator
-	db.Name = name
-	db.Type = tp
+	db.Creator = req.Operator
+	db.Name = req.Name
+	db.Type = uint8(req.Type)
 	db.Account = mine.UID
-	db.Remark = remark
-	db.Nick = nick
-	db.Phone = phone
-	db.Sex = sex
-	db.Portrait = portrait
-	db.Entity = entity
+	db.Remark = req.Remark
+	db.Nick = req.Nick
+	db.Phone = req.Phone
+	db.Sex = uint8(req.Sex)
+	db.Portrait = req.Portrait
+	db.Entity = req.Entity
+	db.Tags = req.Tags
+	if db.Tags == nil {
+		db.Tags = make([]string, 0, 1)
+	}
 	db.SNS = make([]proxy.SNSInfo, 0, 1)
 	err := nosql.CreateUser(db)
 	if err == nil {
@@ -95,6 +100,9 @@ func (mine *AccountInfo)createDatum(info *DatumInfo) error {
 }
 
 func (mine *AccountInfo)DefaultUser() *UserInfo {
+	if len(mine.Users) < 1 {
+		return nil
+	}
 	return mine.Users[0]
 }
 
@@ -165,6 +173,9 @@ func (mine *AccountInfo)RemoveUser(uid, operator string) error {
 				mine.Users = append(mine.Users[:i], mine.Users[i+1:]...)
 				break
 			}
+		}
+		if len(mine.Users) < 1 {
+			removeAccount(mine.UID)
 		}
 	}
 	return err

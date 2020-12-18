@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 )
@@ -25,6 +26,7 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Nick : info.NickName,
 		Portrait: info.Portrait,
 		Entity: info.Entity,
+		Tags: info.Tags,
 	}
 	return tmp
 }
@@ -58,7 +60,7 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 		}
 	}
 
-	user,err1 := account.CreateUser(in.Name, in.Remark, in.Nick, in.Phone, in.Entity,in.Portrait, in.Operator, uint8(in.Type), uint8(in.Sex))
+	user,err1 := account.CreateUser(in)
 	if err1 != nil {
 		out.Status = outError(path,err1.Error(), pb.ResultCode_DBException)
 		return nil
@@ -95,24 +97,19 @@ func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.
 }
 
 func (mine *UserService)RemoveOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
-	path := "user.remove"
+	path := "user.removeOne"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
 		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
 		return nil
 	}
-	account := cache.Context().GetAccountByUser(in.Uid)
-	if account == nil {
-		out.Status = outError(path,"the account not found ", pb.ResultCode_NotExisted)
-		return nil
-	}
-	err := account.RemoveUser(in.Uid, in.Operator)
+	err := cache.Context().RemoveUser(in.Uid, in.Operator)
 	if err != nil {
 		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
-	return err
+	return nil
 }
 
 func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb.ReplyUserList) error {
@@ -125,7 +122,7 @@ func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb
 			out.List = append(out.List, switchUser(info))
 		}
 	}
-	out.Status = outLog(path, out)
+	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
 	return nil
 }
 
@@ -145,7 +142,20 @@ func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *
 	}
 	out.PageNow = in.Page
 	out.Total = uint64(total)
-	out.Status = outLog(path, out)
+	out.Status = outLog(path, fmt.Sprintf("the total = %d and length = %d", total, len(out.List)))
+	return nil
+}
+
+func (mine *UserService) GetByKey (ctx context.Context, in *pb.ReqUserSearch, out *pb.ReplyUserList) error {
+	path := "user.getByKey"
+	inLog(path, in)
+
+	users := cache.Context().SearchUsers(in.Type, in.Tag)
+	out.List = make([]*pb.UserInfo, 0, len(users))
+	for i := 0;i < len(users);i += 1{
+		out.List = append(out.List, switchUser(users[i]))
+	}
+	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
 	return nil
 }
 
@@ -253,7 +263,29 @@ func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity
 	}
 	err := info.UpdateEntity(in.Entity, "")
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_NotExisted)
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		return nil
+	}
+	out.Info = switchUser(info)
+	out.Status = outLog(path, out)
+	return err
+}
+
+func (mine *UserService) UpdateTags (ctx context.Context, in *pb.ReqUserTags, out *pb.ReplyUserOne) error {
+	path := "user.updateTags"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUser(in.Uid)
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	err := info.UpdateTags(in.Operator, in.Tags)
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
 		return nil
 	}
 	out.Info = switchUser(info)

@@ -27,6 +27,7 @@ type User struct {
 	Sex     uint8  `json:"sex" bson:"sex"`
 	Entity  string `json:"entity" bson:"entity"`
 	Portrait string `json:"portrait" bson:"portrait"`
+	Tags  []string `json:"tags" bson:"tags"`
 	SNS     []proxy.SNSInfo `json:"sns" bson:"sns"`
 }
 
@@ -105,6 +106,24 @@ func GetUsersByAccount(uid string) ([]*User, error) {
 	return items, nil
 }
 
+func GetUsersByType(kind uint8) ([]*User, error) {
+	msg := bson.M{"type": kind, "deleteAt":new(time.Time)}
+	cursor, err := findMany(TableUser, msg, 0)
+	if err != nil {
+		return nil, err
+	}
+	var items = make([]*User, 0, 200)
+	for cursor.Next(context.Background()) {
+		var node = new(User)
+		if err := cursor.Decode(node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
 func GetUserByPhone(phone string) (*User, error) {
 	msg := bson.M{"phone": phone}
 	result, err := findOneBy(TableUser, msg)
@@ -167,6 +186,12 @@ func UpdateUserEntity(uid, entity, operator string) error {
 
 func UpdateUserPortrait(uid string, icon, operator string) error {
 	msg := bson.M{"portrait": icon, "operator": operator,  "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserTags(uid, operator string, tags []string) error {
+	msg := bson.M{"tags": tags, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
