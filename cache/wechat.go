@@ -44,48 +44,46 @@ func (mine *cacheContext)CreateWechat(name, open, union, img, creator string) (*
 	}
 	info := new(WechatInfo)
 	info.initInfo(db)
-	mine.wechats = append(mine.wechats, info)
 	return info, nil
 }
 
 func (mine *cacheContext)RemoveWechat(uid string) bool {
-	length := len(mine.wechats)
-	for i := 0; i < length; i++ {
-		if mine.wechats[i].UID == uid {
-			mine.wechats = append(mine.wechats[:i], mine.wechats[i+1:]...)
-			return true
-		}
-	}
-	return false
+	//length := len(mine.wechats)
+	//for i := 0; i < length; i++ {
+	//	if mine.wechats[i].UID == uid {
+	//		mine.wechats = append(mine.wechats[:i], mine.wechats[i+1:]...)
+	//		return true
+	//	}
+	//}
+	//return false
+	return true
 }
 
 func (mine *cacheContext)GetWechatByOpen(uid string) *WechatInfo {
-	for i := 0; i < len(mine.wechats); i += 1 {
-		if mine.wechats[i].OpenID == uid {
-			return mine.wechats[i]
-		}
-	}
+	//for i := 0; i < len(mine.wechats); i += 1 {
+	//	if mine.wechats[i].OpenID == uid {
+	//		return mine.wechats[i]
+	//	}
+	//}
 	db,_ := nosql.GetWechatByOpen(uid)
 	if db != nil {
 		var info = new(WechatInfo)
 		info.initInfo(db)
-		mine.wechats = append(mine.wechats, info)
 		return info
 	}
 	return nil
 }
 
 func (mine *cacheContext)GetWechat(uid string) *WechatInfo {
-	for i := 0; i < len(mine.wechats); i += 1 {
-		if mine.wechats[i].UID == uid {
-			return mine.wechats[i]
-		}
-	}
+	//for i := 0; i < len(mine.wechats); i += 1 {
+	//	if mine.wechats[i].UID == uid {
+	//		return mine.wechats[i]
+	//	}
+	//}
 	db,_ := nosql.GetWechat(uid)
 	if db != nil {
 		var info = new(WechatInfo)
 		info.initInfo(db)
-		mine.wechats = append(mine.wechats, info)
 		return info
 	}
 	return nil

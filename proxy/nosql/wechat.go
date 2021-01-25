@@ -48,6 +48,11 @@ func GetWechat(uid string) (*Wechat, error) {
 	return model, nil
 }
 
+func GetWechatCount() int64 {
+	num, _ := getCount(TableWechat)
+	return num
+}
+
 func UpdateWechatBase(uid string, name, open, union, port, operator string) error {
 	msg := bson.M{"name": name, "oid": open, "uuid": union, "port": port,"operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableWechat, uid, msg)

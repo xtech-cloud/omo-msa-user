@@ -88,8 +88,13 @@ func GetAllUsers() ([]*User, error) {
 	return items, nil
 }
 
+func GetUserCount() int64 {
+	num, _ := getCount(TableUser)
+	return num
+}
+
 func GetUsersByAccount(uid string) ([]*User, error) {
-	msg := bson.M{"account": uid}
+	msg := bson.M{"account": uid, "deleteAt":new(time.Time)}
 	cursor, err := findMany(TableUser, msg, 0)
 	if err != nil {
 		return nil, err
@@ -125,7 +130,7 @@ func GetUsersByType(kind uint8) ([]*User, error) {
 }
 
 func GetUserByPhone(phone string) (*User, error) {
-	msg := bson.M{"phone": phone}
+	msg := bson.M{"phone": phone, "deleteAt":new(time.Time)}
 	result, err := findOneBy(TableUser, msg)
 	if err != nil {
 		return nil, err
@@ -139,7 +144,7 @@ func GetUserByPhone(phone string) (*User, error) {
 }
 
 func GetUserByEntity(entity string) (*User, error) {
-	msg := bson.M{"entity": entity}
+	msg := bson.M{"entity": entity, "deleteAt":new(time.Time)}
 	result, err := findOneBy(TableUser, msg)
 	if err != nil {
 		return nil, err
@@ -153,7 +158,7 @@ func GetUserByEntity(entity string) (*User, error) {
 }
 
 func GetUserBySNS(uid string) (*User, error) {
-	msg := bson.M{"sns.uid": uid}
+	msg := bson.M{"sns.uid": uid, "deleteAt":new(time.Time)}
 	result, err := findOneBy(TableUser, msg)
 	if err != nil {
 		return nil, err
@@ -174,6 +179,12 @@ func UpdateUserBase(uid, name, nick, remark, portrait, operator string, sex uint
 
 func UpdateUserPhone(uid, phone, operator string) error {
 	msg := bson.M{"phone": phone, "operator": operator, "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserType(uid string, kind uint8) error {
+	msg := bson.M{"type": kind, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

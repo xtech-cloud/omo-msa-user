@@ -49,8 +49,10 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 			account, err = cache.Context().CreateAccount(in.Phone, in.Passwords, in.Operator)
 		}else{
 			name := in.Phone
-			if name == ""{
-				name = in.Name
+			if name == "" {
+				if in.Sns != nil && len(in.Sns.Uid) > 0 {
+					name = in.Sns.Uid
+				}
 			}
 			account, err = cache.Context().CreateAccount(name, in.Passwords, in.Operator)
 		}
@@ -64,6 +66,12 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 	if err1 != nil {
 		out.Status = outError(path,err1.Error(), pb.ResultCode_DBException)
 		return nil
+	}
+	if len(user.Phone) < 1 && len(in.Phone) > 1{
+		_ = user.UpdatePhone(in.Phone, in.Operator)
+	}
+	if uint8(in.Type) < user.Type && in.Type > 0 {
+		_ = user.UpdateType(uint8(in.Type))
 	}
 	if in.Sns != nil && len(in.Sns.Uid) > 2 {
 		er := user.AppendSNS(in.Sns.Uid, in.Sns.Name, uint8(in.Sns.Type))
@@ -150,7 +158,7 @@ func (mine *UserService) GetByKey (ctx context.Context, in *pb.ReqUserSearch, ou
 	path := "user.getByKey"
 	inLog(path, in)
 
-	users := cache.Context().SearchUsers(in.Type, in.Tag)
+	users := cache.Context().SearchUsers(in.Type, in.Tags)
 	out.List = make([]*pb.UserInfo, 0, len(users))
 	for i := 0;i < len(users);i += 1{
 		out.List = append(out.List, switchUser(users[i]))

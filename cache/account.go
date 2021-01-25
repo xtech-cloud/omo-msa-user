@@ -38,6 +38,9 @@ func (mine *AccountInfo)initInfo(db *nosql.Account)  {
 func (mine *AccountInfo)UpdateName(name, operator string) error {
 	err := nosql.UpdateAccountBase(mine.UID, name, operator)
 	if err == nil {
+		if mine.DefaultUser().Phone == mine.Name {
+			_ = mine.DefaultUser().UpdatePhone(name, operator)
+		}
 		mine.Name = name
 		mine.Operator = operator
 	}
@@ -166,7 +169,7 @@ func (mine *AccountInfo)RemoveUser(uid, operator string) error {
 	if len(uid) < 1{
 		return errors.New("the user uid is empty")
 	}
-	err := nosql.RemoveUser(uid, operator)
+	err := nosql.UpdateUserType(uid, uint8(pb.UserType_Common))
 	if err == nil {
 		for i := 0;i < len(mine.Users);i += 1 {
 			if mine.Users[i].UID == uid {

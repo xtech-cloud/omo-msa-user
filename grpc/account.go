@@ -75,3 +75,24 @@ func (mine *AccountService)SetPasswords(ctx context.Context, in *pb.ReqSetPasswo
 	out.Status = outLog(path, out)
 	return nil
 }
+
+func (mine *AccountService)UpdateName(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
+	path := "account.updateName"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the uid is empty", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetAccount(in.Uid)
+	if info == nil {
+		out.Status = outError(path,"the account not found", pb.ResultCode_DBException)
+		return nil
+	}
+	err := info.UpdateName(in.Entity, in.Operator)
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		return nil
+	}
+	out.Status = outLog(path, out)
+	return nil
+}

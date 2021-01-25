@@ -34,6 +34,11 @@ func GetAccountNextID() uint64 {
 	return num
 }
 
+func GetAccountCount() int64 {
+	num, _ := getCount(TableAccount)
+	return num
+}
+
 func GetAccount(uid string) (*Account, error) {
 	result, err := findOne(TableAccount, uid)
 	if err != nil {

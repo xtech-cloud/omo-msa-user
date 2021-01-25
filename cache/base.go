@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	"github.com/micro/go-micro/v2/logger"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"omo.msa.user/config"
@@ -17,11 +18,11 @@ type BaseInfo struct {
 	Operator   string
 	CreateTime time.Time
 	UpdateTime time.Time
+	DeleteTime time.Time
 }
 
 type cacheContext struct {
 	accounts []*AccountInfo
-	wechats []*WechatInfo
 }
 
 var cacheCtx *cacheContext
@@ -34,7 +35,10 @@ func InitData() error {
 	if nil != err {
 		return err
 	}
-
+	userNum := nosql.GetUserCount()
+	accNum := nosql.GetAccountCount()
+	wxNum := nosql.GetWechatCount()
+	logger.Infof("the user count = %d; the account count = %d and wechat count = %d", userNum, accNum, wxNum)
 	return nil
 }
 
@@ -43,7 +47,7 @@ func Context() *cacheContext {
 }
 
 func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInfo, error) {
-	if len(name) < 1 {
+	if len(name) < 2 {
 		return nil, errors.New("the account name is empty")
 	}
 	account := mine.getAccountByName(name)

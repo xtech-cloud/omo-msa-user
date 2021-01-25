@@ -35,13 +35,13 @@ func getCount(collection string) (int64, error) {
 	}
 	c := noSql.Collection(collection)
 	if c == nil {
-		return 0, errors.New("can not found the collection of" + collection)
+		return -1, errors.New("can not found the collection of" + collection)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 	defer cancel()
 	result, err := c.EstimatedDocumentCount(ctx, nil)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	return result, nil
 }

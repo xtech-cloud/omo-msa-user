@@ -26,6 +26,7 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.ID = db.ID
 	mine.CreateTime = db.CreatedTime
 	mine.UpdateTime = db.UpdatedTime
+	mine.DeleteTime = db.DeleteTime
 	mine.Name = db.Name
 	mine.Remark = db.Remark
 	mine.Type = db.Type
@@ -98,6 +99,17 @@ func (mine *UserInfo)UpdatePhone(phone, operator string) error {
 	return err
 }
 
+func (mine *UserInfo)UpdateType(kind uint8) error {
+	if kind < 1 {
+		return errors.New("the user type is error")
+	}
+	err := nosql.UpdateUserType(mine.UID, kind)
+	if err == nil {
+		mine.Type = kind
+	}
+	return err
+}
+
 func (mine *UserInfo)UpdateEntity(entity, operator string) error {
 	if entity == "" {
 		return nil
@@ -153,9 +165,9 @@ func (mine *UserInfo)AppendSNS(uid, name string, kind uint8) error {
 	if mine.HadSNS(uid) {
 		return nil
 	}
-	if mine.HadSNSByType(kind) {
-		return errors.New("the sns type is exist")
-	}
+	//if mine.HadSNSByType(kind) {
+	//	return errors.New("the sns type is exist")
+	//}
 	tmp := proxy.SNSInfo{UID: uid, Name: name, Type: kind}
 	err := nosql.AppendUserSNS(mine.UID, tmp)
 	if err == nil {
