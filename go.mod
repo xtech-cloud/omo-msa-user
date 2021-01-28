@@ -18,5 +18,5 @@ require (
 	github.com/xtech-cloud/omo-msp-user v1.3.2
 	go.mongodb.org/mongo-driver v1.3.4
 	google.golang.org/protobuf v1.24.0 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
