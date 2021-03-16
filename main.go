@@ -17,6 +17,12 @@ import (
 	"time"
 )
 
+var (
+	BuildVersion string
+	BuildTime    string
+	CommitID     string
+)
+
 func main() {
 	config.Setup()
 	err := cache.InitData()
@@ -26,7 +32,7 @@ func main() {
 	// New Service
 	service := micro.NewService(
 		micro.Name("omo.msa.user"),
-		micro.Version("latest"),
+		micro.Version(BuildVersion),
 		micro.RegisterTTL(time.Second*time.Duration(config.Schema.Service.TTL)),
 		micro.RegisterInterval(time.Second*time.Duration(config.Schema.Service.Interval)),
 		micro.Address(config.Schema.Service.Address),

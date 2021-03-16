@@ -254,7 +254,7 @@ func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, 
 	}
 	out.Info = switchUser(info)
 	out.Status = outLog(path, out)
-	return err
+	return nil
 }
 
 func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity, out *pb.ReplyUserOne) error {
@@ -276,7 +276,7 @@ func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity
 	}
 	out.Info = switchUser(info)
 	out.Status = outLog(path, out)
-	return err
+	return nil
 }
 
 func (mine *UserService) UpdateTags (ctx context.Context, in *pb.ReqUserTags, out *pb.ReplyUserOne) error {
@@ -298,7 +298,7 @@ func (mine *UserService) UpdateTags (ctx context.Context, in *pb.ReqUserTags, ou
 	}
 	out.Info = switchUser(info)
 	out.Status = outLog(path, out)
-	return err
+	return nil
 }
 
 func (mine *UserService) UpdateSNS (ctx context.Context, in *pb.ReqUserSNS, out *pb.ReplyUserOne) error {
@@ -325,5 +325,35 @@ func (mine *UserService) UpdateSNS (ctx context.Context, in *pb.ReqUserSNS, out 
 	}
 	out.Info = switchUser(info)
 	out.Status = outLog(path, out)
-	return err
+	return nil
+}
+
+func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, out *pb.ReplyInfo) error {
+	path := "user.updatePhone"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUser(in.Uid)
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	old := info.Phone
+	if in.Phone == old {
+		out.Status = outError(path,"the phone not changed", pb.ResultCode_Repeated)
+		return nil
+	}
+	err := info.UpdatePhone(in.Phone, in.Operator)
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		return nil
+	}
+	account := cache.Context().GetAccountByUser(in.Uid)
+	if account != nil && account.Name == old {
+		_ = account.UpdateName(in.Phone, in.Operator)
+	}
+	out.Status = outLog(path, out)
+	return nil
 }
