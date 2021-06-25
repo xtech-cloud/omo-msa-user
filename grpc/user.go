@@ -26,6 +26,7 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Nick : info.NickName,
 		Portrait: info.Portrait,
 		Entity: info.Entity,
+		Status: uint32(info.Status),
 		Tags: info.Tags,
 	}
 	return tmp
@@ -342,7 +343,7 @@ func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, 
 	}
 	old := info.Phone
 	if in.Phone == old {
-		out.Status = outError(path,"the phone not changed", pb.ResultCode_Repeated)
+		out.Status = outLog(path, out)
 		return nil
 	}
 	err := info.UpdatePhone(in.Phone, in.Operator)

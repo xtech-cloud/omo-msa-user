@@ -39,6 +39,16 @@ func InitData() error {
 	accNum := nosql.GetAccountCount()
 	wxNum := nosql.GetWechatCount()
 	logger.Infof("the user count = %d; the account count = %d and wechat count = %d", userNum, accNum, wxNum)
+	if accNum < 1 {
+		account,er := cacheCtx.CreateAccount(config.Schema.Root.Name, config.Schema.Root.Passwords, "system")
+		if er != nil {
+			return er
+		}
+		_, er = account.CreateUser(&pb.ReqUserAdd{Name: config.Schema.Root.Name, Operator: "system"})
+		if er != nil {
+			return er
+		}
+	}
 	return nil
 }
 
@@ -85,7 +95,7 @@ func (mine *cacheContext) GetUser(uid string) *UserInfo {
 		account := mine.GetAccount(db.Account)
 		if account != nil {
 			user := new(UserInfo)
-			user.initInfo(db)
+			user.initInfo(db, account.Status)
 			account.Users = append(account.Users, user)
 			return user
 		}
@@ -106,7 +116,7 @@ func (mine *cacheContext) GetUserByID(id uint64) *UserInfo {
 		account := mine.GetAccount(db.Account)
 		if account != nil {
 			user := new(UserInfo)
-			user.initInfo(db)
+			user.initInfo(db, account.Status)
 			account.Users = append(account.Users, user)
 			return user
 		}
@@ -128,7 +138,7 @@ func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
 			db,err := nosql.GetUserByEntity(entity)
 			if err == nil {
 				user := new(UserInfo)
-				user.initInfo(db)
+				user.initInfo(db, account.Status)
 				account.Users = append(account.Users, user)
 				return user
 			}
@@ -146,9 +156,13 @@ func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
 	}
 	db, err := nosql.GetUserByPhone(phone)
 	if err == nil {
-		info := new(UserInfo)
-		info.initInfo(db)
-		return info
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			info := new(UserInfo)
+			info.initInfo(db, account.Status)
+			account.Users = append(account.Users, info)
+			return info
+		}
 	}
 	return nil
 }
@@ -161,13 +175,16 @@ func (mine *cacheContext) GetUserBySNS(uid string, kind uint8) *UserInfo {
 	}
 	db, err := nosql.GetUserBySNS(uid)
 	if err == nil {
-		info := new(UserInfo)
-		info.initInfo(db)
-		return info
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			info := new(UserInfo)
+			info.initInfo(db, account.Status)
+			account.Users = append(account.Users, info)
+			return info
+		}
 	}
 	return nil
 }
-
 
 func (mine *cacheContext) GetAccount(uid string) *AccountInfo {
 	for _, account := range mine.accounts {
@@ -242,9 +259,13 @@ func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 	if account == nil {
 		return "", errors.New("not found the account")
 	}
+	if account.Status == AccountStatusFreeze {
+		return "", errors.New("the account is freeze")
+	}
 	if account.Passwords != psw {
 		return "", errors.New("the passwords valid failed")
 	}
+	account.UpdateTime = time.Now()
 	return account.DefaultUser().UID, nil
 }
 
@@ -269,7 +290,7 @@ func (mine *cacheContext) SearchUsers(kind pb.UserType, tags []string) []*UserIn
 	for _, user := range users {
 		if hadKey(user.Tags, tags){
 			info := new(UserInfo)
-			info.initInfo(user)
+			info.initInfo(user, 0)
 			list = append(list, info)
 		}
 	}

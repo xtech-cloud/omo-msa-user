@@ -15,13 +15,14 @@ type UserInfo struct {
 	Remark string
 	Phone string
 	Sex uint8
+	Status uint8
 	Entity string
 	Portrait string
 	Tags []string
 	SNS []proxy.SNSInfo
 }
 
-func (mine *UserInfo)initInfo(db *nosql.User)  {
+func (mine *UserInfo)initInfo(db *nosql.User, st uint8)  {
 	mine.UID = db.UID.Hex()
 	mine.ID = db.ID
 	mine.CreateTime = db.CreatedTime
@@ -34,6 +35,7 @@ func (mine *UserInfo)initInfo(db *nosql.User)  {
 	mine.Creator = db.Creator
 	mine.Sex = db.Sex
 	mine.Phone = db.Phone
+	mine.Status = st
 	mine.NickName = db.Nick
 	mine.Account = db.Account
 	mine.Entity = db.Entity

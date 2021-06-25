@@ -11,6 +11,10 @@ const defaultJson string = `{
 		"file": "logs/server.log",
 		"std": false
 	},
+	"root":{
+		"name":"root@admin",
+		"psw":"aca44e364d2084c49fec383ea958eae2"
+	},
 	"database": {
 		"name": "rgsCloud",
 		"ip": "127.0.0.1",

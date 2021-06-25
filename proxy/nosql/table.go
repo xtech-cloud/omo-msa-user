@@ -16,6 +16,7 @@ const (
 	用户地址表
 	*/
 	TableAddress = "address"
-	TableDatum = "datums"
+	TableDatum = "user_datums"
 	TableWechat = "wechat"
+	TableBehaviour = "user_behaviours"
 )

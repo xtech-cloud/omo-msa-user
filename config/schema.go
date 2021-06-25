@@ -21,8 +21,14 @@ type DBConfig struct {
 	Name     string	`json:"name"`
 }
 
+type RootConfig struct {
+	Name string `json:"name"`
+	Passwords string `json:"psw"`
+}
+
 type SchemaConfig struct {
 	Service  ServiceConfig `json:"service"`
 	Logger   LoggerConfig  `json:"logger"`
 	Database DBConfig      `json:"database"`
+	Root     RootConfig `json:"root"`
 }

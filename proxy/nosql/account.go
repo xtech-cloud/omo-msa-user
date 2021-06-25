@@ -18,6 +18,7 @@ type Account struct {
 	Operator    string             `json:"operator" bson:"operator"`
 
 	Name    string `json:"name" bson:"name"`
+	Status  uint8 `json:"status" bson:"status"`
 	Passwords string `json:"passwords" bson:"passwords"`
 }
 
@@ -66,6 +67,26 @@ func GetAccountByName(name string) (*Account, error) {
 	return model, nil
 }
 
+func getOldAccounts() ([]*Account, error) {
+	var items = make([]*Account, 0, 20)
+	filter := bson.M{"status": bson.M{"$exists": false}}
+	cursor, err1 := findMany(TableAccount, filter, 0)
+	if err1 != nil {
+		return nil, err1
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var node = new(Account)
+		if err := cursor.Decode(node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
+
 func GetAllAccounts() ([]*Account, error) {
 	cursor, err1 := findAll(TableAccount, 0)
 	if err1 != nil {
@@ -85,6 +106,12 @@ func GetAllAccounts() ([]*Account, error) {
 
 func UpdateAccountBase(uid, name, operator string) error {
 	msg := bson.M{"name": name, "operator": operator, "updatedAt": time.Now()}
+	_, err := updateOne(TableAccount, uid, msg)
+	return err
+}
+
+func UpdateAccountStatus(uid, operator string, st uint8) error {
+	msg := bson.M{"status": st, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableAccount, uid, msg)
 	return err
 }

@@ -9,7 +9,13 @@ import (
 	"time"
 )
 
+const(
+	AccountStatusIdle = 0
+	AccountStatusFreeze = 1
+)
+
 type AccountInfo struct {
+	Status uint8
 	BaseInfo
 	Passwords string
 	Users []*UserInfo
@@ -21,13 +27,14 @@ func (mine *AccountInfo)initInfo(db *nosql.Account)  {
 	mine.CreateTime = db.CreatedTime
 	mine.UpdateTime = db.UpdatedTime
 	mine.Name = db.Name
+	mine.Status = db.Status
 	mine.Passwords = db.Passwords
 	users,err := nosql.GetUsersByAccount(mine.UID)
 	if err == nil {
 		mine.Users = make([]*UserInfo, 0, len(users))
 		for _, user := range users {
 			info := new(UserInfo)
-			info.initInfo(user)
+			info.initInfo(user, db.Status)
 			mine.Users = append(mine.Users, info)
 		}
 	}else{
@@ -42,6 +49,15 @@ func (mine *AccountInfo)UpdateName(name, operator string) error {
 			_ = mine.DefaultUser().UpdatePhone(name, operator)
 		}
 		mine.Name = name
+		mine.Operator = operator
+	}
+	return err
+}
+
+func (mine *AccountInfo)UpdateStatus(st uint8, operator string) error {
+	err := nosql.UpdateAccountStatus(mine.UID, operator, st)
+	if err == nil {
+		mine.Status = st
 		mine.Operator = operator
 	}
 	return err
@@ -82,7 +98,7 @@ func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
 	err := nosql.CreateUser(db)
 	if err == nil {
 		user :=new(UserInfo)
-		user.initInfo(db)
+		user.initInfo(db, 0)
 		mine.Users = append(mine.Users, user)
 		return user,nil
 	}
@@ -158,7 +174,7 @@ func (mine *AccountInfo)GetUserByPhone(phone string) *UserInfo {
 	db,err := nosql.GetUserByPhone(phone)
 	if err == nil {
 		user := new(UserInfo)
-		user.initInfo(db)
+		user.initInfo(db, mine.Status)
 		mine.Users = append(mine.Users, user)
 		return user
 	}
