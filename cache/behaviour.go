@@ -4,6 +4,7 @@ import (
 	"github.com/micro/go-micro/v2/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"omo.msa.user/proxy/nosql"
+	"strings"
 	"time"
 )
 
@@ -55,11 +56,11 @@ func (mine *cacheContext)UpdateBehaviour(user, target string, act ActionType) er
 }
 
 func (mine *cacheContext)AddBehaviour(user, target string, kind TargetType, act ActionType) error {
-	db,err := nosql.GetBehaviourByTarget(user, target)
-	if err != nil {
+	had,err := mine.HadBehaviour(user, target)
+	if err != nil{
 		return err
 	}
-	if db != nil {
+	if had {
 		return nil
 	}
 	return mine.createBehaviour(user, target, kind, act)
@@ -67,7 +68,7 @@ func (mine *cacheContext)AddBehaviour(user, target string, kind TargetType, act 
 
 func (mine *cacheContext)HadBehaviour(user, target string) (bool,error) {
 	db,err := nosql.GetBehaviourByTarget(user, target)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(),"no documents in result"){
 		return false, err
 	}
 	if db != nil {

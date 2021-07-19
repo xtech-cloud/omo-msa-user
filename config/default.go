@@ -16,7 +16,7 @@ const defaultJson string = `{
 		"psw":"aca44e364d2084c49fec383ea958eae2"
 	},
 	"database": {
-		"name": "rgsCloud",
+		"name": "userCloud",
 		"ip": "127.0.0.1",
 		"port": "27017",
 		"user": "root",
