@@ -15,8 +15,9 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tidwall/gjson v1.6.0
-	github.com/xtech-cloud/omo-msp-user v1.3.8
+	github.com/xtech-cloud/omo-msp-user v1.3.9
 	go.mongodb.org/mongo-driver v1.4.6
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	google.golang.org/protobuf v1.24.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )

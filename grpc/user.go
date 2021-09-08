@@ -26,6 +26,7 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Nick : info.NickName,
 		Portrait: info.Portrait,
 		Entity: info.Entity,
+		Follows: info.Follows,
 		Status: uint32(info.Status),
 		Tags: info.Tags,
 	}
@@ -44,10 +45,11 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 			return nil
 		}
 	}else{
+		psw := cache.CryptPsw(in.Passwords)
 		if in.Type == pb.UserType_SuperRoot {
-			account, err = cache.Context().CreateAccount(in.Name, in.Passwords, in.Operator)
+			account, err = cache.Context().CreateAccount(in.Name, psw, in.Operator)
 		}else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
-			account, err = cache.Context().CreateAccount(in.Phone, in.Passwords, in.Operator)
+			account, err = cache.Context().CreateAccount(in.Phone, psw, in.Operator)
 		}else{
 			name := in.Phone
 			if name == "" {
@@ -55,7 +57,7 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 					name = in.Sns.Uid
 				}
 			}
-			account, err = cache.Context().CreateAccount(name, in.Passwords, in.Operator)
+			account, err = cache.Context().CreateAccount(name, psw, in.Operator)
 		}
 		if err != nil {
 			out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
@@ -354,6 +356,27 @@ func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, 
 	account := cache.Context().GetAccountByUser(in.Uid)
 	if account != nil && account.Name == old {
 		_ = account.UpdateName(in.Phone, in.Operator)
+	}
+	out.Status = outLog(path, out)
+	return nil
+}
+
+func (mine *UserService) UpdateFollows (ctx context.Context, in *pb.RequestList, out *pb.ReplyInfo) error {
+	path := "user.updateFollows"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		return nil
+	}
+	info := cache.Context().GetUser(in.Uid)
+	if info == nil {
+		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
+		return nil
+	}
+	err := info.UpdateFollows(in.List)
+	if err != nil {
+		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		return nil
 	}
 	out.Status = outLog(path, out)
 	return nil

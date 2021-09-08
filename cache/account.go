@@ -64,9 +64,10 @@ func (mine *AccountInfo)UpdateStatus(st uint8, operator string) error {
 }
 
 func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
-	err := nosql.UpdateAccountPasswords(mine.UID, psw, operator)
+	hash := CryptPsw(psw)
+	err := nosql.UpdateAccountPasswords(mine.UID, hash, operator)
 	if err == nil {
-		mine.Passwords = psw
+		mine.Passwords = hash
 		mine.Operator = operator
 	}
 	return err
@@ -94,6 +95,8 @@ func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
 	if db.Tags == nil {
 		db.Tags = make([]string, 0, 1)
 	}
+	db.Follows = make([]string, 0, 1)
+
 	db.SNS = make([]proxy.SNSInfo, 0, 1)
 	err := nosql.CreateUser(db)
 	if err == nil {
@@ -181,20 +184,25 @@ func (mine *AccountInfo)GetUserByPhone(phone string) *UserInfo {
 	return nil
 }
 
+func (mine *AccountInfo)Remove(operator string) error {
+	err := nosql.UpdateAccountStatus(mine.UID, operator, AccountStatusFreeze)
+	if err == nil {
+		mine.Status = AccountStatusFreeze
+	}
+	return err
+}
+
 func (mine *AccountInfo)RemoveUser(uid, operator string) error {
 	if len(uid) < 1{
 		return errors.New("the user uid is empty")
 	}
-	err := nosql.UpdateUserType(uid, uint8(pb.UserType_Common))
+	err := nosql.RemoveUser(uid, operator)
 	if err == nil {
 		for i := 0;i < len(mine.Users);i += 1 {
 			if mine.Users[i].UID == uid {
 				mine.Users = append(mine.Users[:i], mine.Users[i+1:]...)
 				break
 			}
-		}
-		if len(mine.Users) < 1 {
-			removeAccount(mine.UID)
 		}
 	}
 	return err

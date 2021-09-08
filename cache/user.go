@@ -19,6 +19,7 @@ type UserInfo struct {
 	Entity string
 	Portrait string
 	Tags []string
+	Follows []string
 	SNS []proxy.SNSInfo
 }
 
@@ -43,6 +44,10 @@ func (mine *UserInfo)initInfo(db *nosql.User, st uint8)  {
 	mine.Tags = db.Tags
 	if mine.Tags == nil {
 		mine.Tags = make([]string, 0 ,5)
+	}
+	mine.Follows = db.Follows
+	if mine.Follows == nil {
+		mine.Follows = make([]string, 0 ,5)
 	}
 	mine.SNS = db.SNS
 	if mine.SNS == nil {
@@ -75,6 +80,14 @@ func (mine *UserInfo)UpdateBase(name, nick, remark, portrait, operator string, s
 	}
 
 	return  nil
+}
+
+func (mine *UserInfo)UpdateFollows(list []string) error {
+	err := nosql.UpdateUserFollows(mine.UID, list)
+	if err == nil {
+		mine.Follows = list
+	}
+	return err
 }
 
 func (mine *UserInfo)UpdatePortrait(icon, operator string) error {

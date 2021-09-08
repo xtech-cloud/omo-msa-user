@@ -29,6 +29,7 @@ type User struct {
 	Portrait string `json:"portrait" bson:"portrait"`
 	Tags  []string `json:"tags" bson:"tags"`
 	SNS     []proxy.SNSInfo `json:"sns" bson:"sns"`
+	Follows []string `json:"follows" bson:"follows"`
 }
 
 func CreateUser(info *User) error {
@@ -197,6 +198,12 @@ func UpdateUserEntity(uid, entity, operator string) error {
 
 func UpdateUserPortrait(uid string, icon, operator string) error {
 	msg := bson.M{"portrait": icon, "operator": operator,  "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserFollows(uid string, list []string) error {
+	msg := bson.M{"follows": list, "operator": uid,  "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
