@@ -17,6 +17,7 @@ func switchAccount(info *cache.AccountInfo) *pb.AccountInfo {
 		Updated : info.UpdateTime.Unix(),
 		Creator: info.Creator,
 		Operator: info.Operator,
+		Status: uint32(info.Status),
 	}
 	return tmp
 }
@@ -107,6 +108,10 @@ func (mine *AccountService)UpdateStatus(ctx context.Context, in *pb.ReqAccountSt
 	info := cache.Context().GetAccount(in.Uid)
 	if info == nil {
 		out.Status = outError(path,"the account not found", pb.ResultCode_DBException)
+		return nil
+	}
+	if info.DefaultUser() == nil {
+		out.Status = outError(path,"the account not found the default user", pb.ResultCode_NotExisted)
 		return nil
 	}
 	if info.DefaultUser().Type == uint8(pb.UserType_SuperRoot) {

@@ -126,3 +126,8 @@ func RemoveAccount(uid, operator string) error {
 	_, err := removeOne(TableAccount, uid, operator)
 	return err
 }
+
+func DeleteAccount(uid string) error {
+	_, err := deleteOne(TableAccount, uid)
+	return err
+}

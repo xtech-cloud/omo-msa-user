@@ -29,20 +29,28 @@ func (mine *AccountInfo)initInfo(db *nosql.Account)  {
 	mine.Name = db.Name
 	mine.Status = db.Status
 	mine.Passwords = db.Passwords
+	mine.Users = make([]*UserInfo, 0, 1)
+}
+
+func (mine *AccountInfo) initUsers()  {
+	if len(mine.Users) > 0 {
+		return
+	}
 	users,err := nosql.GetUsersByAccount(mine.UID)
 	if err == nil {
 		mine.Users = make([]*UserInfo, 0, len(users))
 		for _, user := range users {
 			info := new(UserInfo)
-			info.initInfo(user, db.Status)
+			info.initInfo(user, mine.Status)
 			mine.Users = append(mine.Users, info)
 		}
-	}else{
-		mine.Users = make([]*UserInfo, 0, 1)
 	}
 }
 
 func (mine *AccountInfo)UpdateName(name, operator string) error {
+	if mine.DefaultUser() == nil {
+		return errors.New("the account not found the user that name = "+name)
+	}
 	err := nosql.UpdateAccountBase(mine.UID, name, operator)
 	if err == nil {
 		if mine.DefaultUser().Phone == mine.Name {
@@ -102,6 +110,7 @@ func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
 	if err == nil {
 		user :=new(UserInfo)
 		user.initInfo(db, 0)
+		mine.initUsers()
 		mine.Users = append(mine.Users, user)
 		return user,nil
 	}
@@ -122,6 +131,7 @@ func (mine *AccountInfo)createDatum(info *DatumInfo) error {
 }
 
 func (mine *AccountInfo)DefaultUser() *UserInfo {
+	mine.initUsers()
 	if len(mine.Users) < 1 {
 		return nil
 	}
@@ -129,10 +139,12 @@ func (mine *AccountInfo)DefaultUser() *UserInfo {
 }
 
 func (mine *AccountInfo)AllUsers() []*UserInfo {
+	mine.initUsers()
 	return mine.Users
 }
 
 func (mine *AccountInfo)GetUser(uid string) *UserInfo {
+	mine.initUsers()
 	for i := 0;i < len(mine.Users);i += 1 {
 		if mine.Users[i].UID == uid {
 			return mine.Users[i]
@@ -142,6 +154,7 @@ func (mine *AccountInfo)GetUser(uid string) *UserInfo {
 }
 
 func (mine *AccountInfo)GetUserByID(id uint64) *UserInfo {
+	mine.initUsers()
 	for i := 0;i < len(mine.Users);i += 1 {
 		if mine.Users[i].ID == id {
 			return mine.Users[i]
@@ -151,6 +164,7 @@ func (mine *AccountInfo)GetUserByID(id uint64) *UserInfo {
 }
 
 func (mine *AccountInfo)GetUserByEntity(entity string) *UserInfo {
+	mine.initUsers()
 	for i := 0;i < len(mine.Users);i += 1 {
 		if mine.Users[i].Entity == entity {
 			return mine.Users[i]
@@ -169,6 +183,7 @@ func (mine *AccountInfo)HadUser(user string) bool {
 }
 
 func (mine *AccountInfo)GetUserByPhone(phone string) *UserInfo {
+	mine.initUsers()
 	for i := 0;i < len(mine.Users);i += 1 {
 		if mine.Users[i].Phone == phone {
 			return mine.Users[i]
@@ -192,15 +207,31 @@ func (mine *AccountInfo)Remove(operator string) error {
 	return err
 }
 
-func (mine *AccountInfo)RemoveUser(uid, operator string) error {
+func (mine *AccountInfo)Delete() error {
+	_ = nosql.DeleteAccount(mine.UID)
+	for i := 0;i < len(mine.Users);i += 1 {
+		_ = nosql.DeleteUser(mine.Users[i].UID)
+	}
+	return errors.New("delete the account")
+}
+
+func (mine *AccountInfo) DeleteUser(uid string) error {
 	if len(uid) < 1{
 		return errors.New("the user uid is empty")
 	}
-	err := nosql.RemoveUser(uid, operator)
+	if len(mine.Users) == 1 {
+		return errors.New("the user is only one")
+	}
+	mine.initUsers()
+	err := nosql.DeleteUser(uid)
 	if err == nil {
 		for i := 0;i < len(mine.Users);i += 1 {
 			if mine.Users[i].UID == uid {
-				mine.Users = append(mine.Users[:i], mine.Users[i+1:]...)
+				if i == len(mine.Users) - 1 {
+					mine.Users = append(mine.Users[:i])
+				}else{
+					mine.Users = append(mine.Users[:i], mine.Users[i+1:]...)
+				}
 				break
 			}
 		}

@@ -221,7 +221,7 @@ func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
 func (mine *cacheContext)RemoveUser(user, operator string) error {
 	account := mine.GetAccountByUser(user)
 	if account != nil {
-		return account.RemoveUser(user,operator)
+		return account.DeleteUser(user)
 	}
 	return nil
 }
@@ -248,9 +248,12 @@ func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 	//hash := "$2a$10$DlGnCj1SSfDaZbxUrXqJ6eEHrKFdgFa8n7MAJODE7zzvrr1SHa6e2"
 	err := bcrypt.CompareHashAndPassword([]byte(account.Passwords), []byte(psw))
 	if err != nil {
-		return "", errors.New("the passwords valid failed that err = " + err.Error())
+		return "", errors.New("the passwords valid failed that hash = "+account.Passwords+" ; err = " + err.Error())
 	}
 	account.UpdateTime = time.Now()
+	if account.DefaultUser() == nil {
+		return "", errors.New("the account not found the user that name = "+name)
+	}
 	return account.DefaultUser().UID, nil
 }
 
@@ -259,9 +262,12 @@ func (mine *cacheContext) AllUsers() []*UserInfo {
 	all,err := nosql.GetAllUsers()
 	if err == nil {
 		for _, db := range all {
-			info := new(UserInfo)
-			info.initInfo(db, 0)
-			list = append(list, info)
+			acc := mine.GetAccount(db.Account)
+			if acc != nil {
+				info := new(UserInfo)
+				info.initInfo(db, acc.Status)
+				list = append(list, info)
+			}
 		}
 	}
 	return list
@@ -279,9 +285,12 @@ func (mine *cacheContext) SearchUsers(kind pb.UserType, tags []string) []*UserIn
 	}
 	for _, user := range users {
 		if hadKey(user.Tags, tags){
-			info := new(UserInfo)
-			info.initInfo(user, 0)
-			list = append(list, info)
+			account := mine.GetAccount(user.Account)
+			if account != nil {
+				info := new(UserInfo)
+				info.initInfo(user, account.Status)
+				list = append(list, info)
+			}
 		}
 	}
 	return list

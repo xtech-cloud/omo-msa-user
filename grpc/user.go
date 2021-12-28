@@ -114,6 +114,8 @@ func (mine *UserService)RemoveOne(ctx context.Context, in *pb.RequestInfo, out *
 		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
 		return nil
 	}
+	//out.Status = outError(path,"the user cannot remove ", pb.ResultCode_DBException)
+	//return nil
 	err := cache.Context().RemoveUser(in.Uid, in.Operator)
 	if err != nil {
 		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
@@ -272,7 +274,7 @@ func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity
 		out.Status = outError(path,"the user not found ", pb.ResultCode_NotExisted)
 		return nil
 	}
-	err := info.UpdateEntity(in.Entity, "")
+	err := info.UpdateEntity(in.Entity, in.Operator)
 	if err != nil {
 		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
 		return nil
