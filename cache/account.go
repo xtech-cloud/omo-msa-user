@@ -82,6 +82,7 @@ func (mine *AccountInfo)UpdatePasswords(psw, operator string) error {
 }
 
 func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
+	mine.initUsers()
 	if len(mine.Users) > 0 {
 		return mine.Users[0],nil
 	}
@@ -110,7 +111,6 @@ func (mine *AccountInfo)CreateUser(req *pb.ReqUserAdd) (*UserInfo, error) {
 	if err == nil {
 		user :=new(UserInfo)
 		user.initInfo(db, 0)
-		mine.initUsers()
 		mine.Users = append(mine.Users, user)
 		return user,nil
 	}
