@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 )
@@ -28,7 +29,7 @@ func (mine *WechatService)AddOne(ctx context.Context, in *pb.ReqWechatAdd, out *
 	inLog(path, in)
 	info,err := cache.Context().CreateWechat(in.Name, in.Open, in.Union, in.Portrait, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Info = switchWechat(info)
@@ -40,7 +41,7 @@ func (mine *WechatService)GetOne(ctx context.Context, in *pb.ReqWechatBy, out *p
 	path := "wechat.getOne"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	var info *cache.WechatInfo
@@ -53,7 +54,7 @@ func (mine *WechatService)GetOne(ctx context.Context, in *pb.ReqWechatBy, out *p
 	}
 
 	if info == nil {
-		out.Status = outError(path,"the wechat not found ", pb.ResultCode_NotExisted)
+		out.Status = outError(path,"the wechat not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 
@@ -66,17 +67,17 @@ func (mine *WechatService)UpdateBase(ctx context.Context, in *pb.ReqWechatUpdate
 	path := "wechat.updateOne"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetWechat(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the wechat not found ", pb.ResultCode_NotExisted)
+		out.Status = outError(path,"the wechat not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	err := info.UpdateBase(in.Name, in.Open, in.Union, in.Portrait, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Info = switchWechat(info)

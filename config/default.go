@@ -2,7 +2,7 @@ package config
 
 const defaultJson string = `{
 	"service": {
-		"address": ":7078",
+		"address": ":7068",
 		"ttl": 15,
 		"interval": 10
 	},
@@ -17,7 +17,7 @@ const defaultJson string = `{
 	},
 	"database": {
 		"name": "userCloud",
-		"ip": "127.0.0.1",
+		"ip": "172.16.10.31",
 		"port": "27017",
 		"user": "root",
 		"password": "pass2019",

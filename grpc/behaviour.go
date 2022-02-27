@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 	"omo.msa.user/proxy/nosql"
@@ -27,7 +28,7 @@ func (mine *BehaviourService)AddOne(ctx context.Context, in *pb.ReqBehaviourAdd,
 	inLog(path, in)
 	err := cache.Context().AddBehaviour(in.User, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
@@ -39,7 +40,7 @@ func (mine *BehaviourService)HadOne(ctx context.Context, in *pb.ReqBehaviourChec
 	inLog(path, in)
 	had, err := cache.Context().HadBehaviour(in.User, in.Target)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Had = had
@@ -61,7 +62,7 @@ func (mine *BehaviourService)UpdateOne(ctx context.Context, in *pb.ReqBehaviourU
 	inLog(path, in)
 	err := cache.Context().UpdateBehaviour(in.User, in.Target, cache.ActionType(in.Action))
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
@@ -80,12 +81,12 @@ func (mine *BehaviourService)GetList(ctx context.Context, in *pb.ReqBehaviourLis
 	}else if len(in.Target) > 1 {
 
 	}else {
-		out.Status = outError(path,"", pb.ResultCode_DBException)
+		out.Status = outError(path,"", pbstatus.ResultStatus_DBException)
 		return nil
 	}
 
 	if err != nil {
-		out.Status = outError(path,"", pb.ResultCode_DBException)
+		out.Status = outError(path,"", pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.List = make([]*pb.BehaviourInfo, 0, len(list))

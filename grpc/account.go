@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 )
@@ -26,12 +27,12 @@ func (mine *AccountService)GetOne(ctx context.Context, in *pb.RequestInfo, out *
 	path := "account.getOne"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty",pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetAccount(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the account not found", pb.ResultCode_NotExisted)
+		out.Status = outError(path,"the account not found",pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchAccount(info)
@@ -43,12 +44,12 @@ func (mine *AccountService)SignIn(ctx context.Context, in *pb.ReqSignIn, out *pb
 	path := "account.signIn"
 	inLog(path, in)
 	if len(in.Name) < 1 {
-		out.Status = outError(path,"the account name is empty", pb.ResultCode_Empty)
+		out.Status = outError(path,"the account name is empty",pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	user,err := cache.Context().SignIn(in.Name, in.Psw)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(),pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Uid = user
@@ -60,17 +61,17 @@ func (mine *AccountService)SetPasswords(ctx context.Context, in *pb.ReqSetPasswo
 	path := "account.setPasswords"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty",pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetAccount(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the account not found", pb.ResultCode_DBException)
+		out.Status = outError(path,"the account not found",pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	err := info.UpdatePasswords(in.Psw, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(),pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
@@ -81,17 +82,17 @@ func (mine *AccountService)UpdateName(ctx context.Context, in *pb.RequestInfo, o
 	path := "account.updateName"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty",pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetAccount(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the account not found", pb.ResultCode_DBException)
+		out.Status = outError(path,"the account not found",pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	err := info.UpdateName(in.Entity, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(),pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
@@ -102,25 +103,25 @@ func (mine *AccountService)UpdateStatus(ctx context.Context, in *pb.ReqAccountSt
 	path := "account.updateName"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty", pb.ResultCode_Empty)
+		out.Status = outError(path,"the uid is empty",pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetAccount(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the account not found", pb.ResultCode_DBException)
+		out.Status = outError(path,"the account not found",pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	if info.DefaultUser() == nil {
-		out.Status = outError(path,"the account not found the default user", pb.ResultCode_NotExisted)
+		out.Status = outError(path,"the account not found the default user",pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	if info.DefaultUser().Type == uint8(pb.UserType_SuperRoot) {
-		out.Status = outError(path,"the user type is root", pb.ResultCode_DBException)
+		out.Status = outError(path,"the user type is root",pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	err := info.UpdateStatus(uint8(in.Status), in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pb.ResultCode_DBException)
+		out.Status = outError(path,err.Error(),pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
