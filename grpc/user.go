@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/micro/go-micro/v2/logger"
 	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
@@ -134,6 +135,8 @@ func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb
 		info := cache.Context().GetUser(value)
 		if info != nil {
 			out.List = append(out.List, switchUser(info))
+		}else{
+			logger.Warn("not found the user("+value+")")
 		}
 	}
 	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
