@@ -30,6 +30,7 @@ func (mine *cacheContext) createBehaviour(user, target string, kind TargetType, 
 	db.ID = nosql.GetBehaviourNextID()
 	db.CreatedTime = time.Now()
 	db.Creator = user
+	db.UpdatedTime = time.Now()
 	db.User = user
 	db.Target = target
 	db.Type = uint8(kind)

@@ -19,6 +19,7 @@ func switchBehaviour(info *nosql.Behaviour) *pb.BehaviourInfo {
 		Action : uint32(info.Action),
 		Created : uint64(info.CreatedTime.Unix()),
 		Creator: info.Creator,
+		Updated: uint64(info.UpdatedTime.Unix()),
 	}
 	return tmp
 }

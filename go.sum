@@ -554,8 +554,8 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xtech-cloud/omo-msp-status v1.0.1 h1:FfqriKg4T6PKTI7+o//KBiZPMhZqhfSnwff/MB4y6D4=
 github.com/xtech-cloud/omo-msp-status v1.0.1/go.mod h1:TZEgM32ZnapuqmsPPdStqgBeeWE708h6YBxb1qtbMFk=
-github.com/xtech-cloud/omo-msp-user v1.3.9 h1:6jk0L6y431QJMCVf5gT63HDtvZa9MEODg+5aEH76Oew=
-github.com/xtech-cloud/omo-msp-user v1.3.9/go.mod h1:ogDauiUeesXeHTo/rI/38RAeDrkzlDXDyLCdDDbGU2A=
+github.com/xtech-cloud/omo-msp-user v1.3.10 h1:gHpM6R9yoSw/Q0ZXghU8IuxElVMJqtfkAEDUWwWSYQM=
+github.com/xtech-cloud/omo-msp-user v1.3.10/go.mod h1:ogDauiUeesXeHTo/rI/38RAeDrkzlDXDyLCdDDbGU2A=
 go.etcd.io/bbolt v1.3.4 h1:hi1bXHMVrlQh6WwxAy+qZCV/SYIlqo+Ushwdpa4tAKg=
 go.etcd.io/bbolt v1.3.4/go.mod h1:G5EMThwa9y8QZGBClrRx5EY+Yw9kAhnjy3bSjsnlVTQ=
 go.mongodb.org/mongo-driver v1.4.6 h1:rh7GdYmDrb8AQSkF8yteAus8qYOgOASWDOv1BWqBXkU=
