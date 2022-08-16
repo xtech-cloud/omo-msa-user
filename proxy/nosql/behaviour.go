@@ -165,9 +165,10 @@ func GetBehaviourCountByUser(user string) (int64, error) {
 	return getCountByFilter(TableBehaviour, msg)
 }
 
-func UpdateBehaviourAction(uid, target string, act uint8) error {
-	msg := bson.M{"action": act, "target": target, "updatedAt": time.Now()}
-	_, err := updateOne(TableBehaviour, uid, msg)
+func UpdateBehaviourAction(user, target string, act uint8) error {
+	filter := bson.M{"user":user, "target": target}
+	update := bson.M{"$set": bson.M{"action": act, "updatedAt": time.Now()}}
+	_, err := updateOneBy(TableBehaviour, filter, update)
 	return err
 }
 
