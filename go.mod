@@ -18,7 +18,7 @@ require (
 	github.com/xtech-cloud/omo-msp-status v1.0.1
 	github.com/xtech-cloud/omo-msp-user v1.3.10
 	go.mongodb.org/mongo-driver v1.4.6
-	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/crypto v0.1.0
 	google.golang.org/protobuf v1.24.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
