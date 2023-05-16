@@ -11,19 +11,19 @@ type UserInfo struct {
 	Type uint8
 	BaseInfo
 	NickName string
-	Account string
-	Remark string
-	Phone string
-	Sex uint8
-	Status uint8
-	Entity string
+	Account  string
+	Remark   string
+	Phone    string
+	Sex      uint8
+	Status   uint8
+	Entity   string
 	Portrait string
-	Tags []string
-	Follows []string
-	SNS []proxy.SNSInfo
+	Tags     []string
+	Follows  []string
+	SNS      []proxy.SNSInfo
 }
 
-func (mine *UserInfo)initInfo(db *nosql.User, st uint8)  {
+func (mine *UserInfo) initInfo(db *nosql.User, st uint8) {
 	mine.UID = db.UID.Hex()
 	mine.ID = db.ID
 	mine.CreateTime = db.CreatedTime
@@ -43,11 +43,11 @@ func (mine *UserInfo)initInfo(db *nosql.User, st uint8)  {
 	mine.Portrait = db.Portrait
 	mine.Tags = db.Tags
 	if mine.Tags == nil {
-		mine.Tags = make([]string, 0 ,5)
+		mine.Tags = make([]string, 0, 5)
 	}
 	mine.Follows = db.Follows
 	if mine.Follows == nil {
-		mine.Follows = make([]string, 0 ,5)
+		mine.Follows = make([]string, 0, 5)
 	}
 	mine.SNS = db.SNS
 	if mine.SNS == nil {
@@ -55,17 +55,17 @@ func (mine *UserInfo)initInfo(db *nosql.User, st uint8)  {
 	}
 }
 
-func (mine *UserInfo)UpdateBase(name, nick, remark, portrait, operator string, sex uint8) error {
-	if len(name) < 2 {
+func (mine *UserInfo) UpdateBase(name, nick, remark, portrait, operator string, sex uint8) error {
+	if len(name) < 1 {
 		name = mine.Name
 	}
-	if len(remark) < 2 {
+	if len(remark) < 1 {
 		remark = mine.Remark
 	}
-	if len(nick) < 2 {
+	if len(nick) < 1 {
 		nick = mine.NickName
 	}
-	if len(portrait) < 2 {
+	if len(portrait) < 1 {
 		portrait = mine.Portrait
 	}
 	err := nosql.UpdateUserBase(mine.UID, name, nick, remark, portrait, operator, sex)
@@ -79,10 +79,10 @@ func (mine *UserInfo)UpdateBase(name, nick, remark, portrait, operator string, s
 		mine.UpdateTime = time.Now()
 	}
 
-	return  nil
+	return nil
 }
 
-func (mine *UserInfo)UpdateFollows(list []string) error {
+func (mine *UserInfo) UpdateFollows(list []string) error {
 	err := nosql.UpdateUserFollows(mine.UID, list)
 	if err == nil {
 		mine.Follows = list
@@ -90,8 +90,8 @@ func (mine *UserInfo)UpdateFollows(list []string) error {
 	return err
 }
 
-func (mine *UserInfo)UpdatePortrait(icon, operator string) error {
-	if len(icon) <2 {
+func (mine *UserInfo) UpdatePortrait(icon, operator string) error {
+	if len(icon) < 2 {
 		return nil
 	}
 	err := nosql.UpdateUserPortrait(mine.UID, icon, operator)
@@ -102,7 +102,7 @@ func (mine *UserInfo)UpdatePortrait(icon, operator string) error {
 	return err
 }
 
-func (mine *UserInfo)UpdatePhone(phone, operator string) error {
+func (mine *UserInfo) UpdatePhone(phone, operator string) error {
 	if len(phone) < 7 {
 		return errors.New("the phone format is error")
 	}
@@ -114,7 +114,7 @@ func (mine *UserInfo)UpdatePhone(phone, operator string) error {
 	return err
 }
 
-func (mine *UserInfo)UpdateType(kind uint8) error {
+func (mine *UserInfo) UpdateType(kind uint8) error {
 	if kind < 1 {
 		return errors.New("the user type is error")
 	}
@@ -125,11 +125,11 @@ func (mine *UserInfo)UpdateType(kind uint8) error {
 	return err
 }
 
-func (mine *UserInfo)UpdateEntity(entity, operator string) error {
+func (mine *UserInfo) UpdateEntity(entity, operator string) error {
 	if entity == "" {
 		return nil
 	}
-	if operator == ""{
+	if operator == "" {
 		operator = mine.Operator
 	}
 	err := nosql.UpdateUserEntity(mine.UID, entity, operator)
@@ -140,11 +140,11 @@ func (mine *UserInfo)UpdateEntity(entity, operator string) error {
 	return err
 }
 
-func (mine *UserInfo)UpdateTags(operator string, tags []string) error {
+func (mine *UserInfo) UpdateTags(operator string, tags []string) error {
 	if tags == nil {
 		return nil
 	}
-	if operator == ""{
+	if operator == "" {
 		operator = mine.Operator
 	}
 	err := nosql.UpdateUserTags(mine.UID, operator, tags)
@@ -155,7 +155,7 @@ func (mine *UserInfo)UpdateTags(operator string, tags []string) error {
 	return err
 }
 
-func (mine *UserInfo)HadSNS(uid string) bool {
+func (mine *UserInfo) HadSNS(uid string) bool {
 	for _, sn := range mine.SNS {
 		if sn.UID == uid {
 			return true
@@ -164,7 +164,7 @@ func (mine *UserInfo)HadSNS(uid string) bool {
 	return false
 }
 
-func (mine *UserInfo)HadSNSByType(kind uint8) bool {
+func (mine *UserInfo) HadSNSByType(kind uint8) bool {
 	for _, sn := range mine.SNS {
 		if sn.Type == kind {
 			return true
@@ -173,7 +173,7 @@ func (mine *UserInfo)HadSNSByType(kind uint8) bool {
 	return false
 }
 
-func (mine *UserInfo)AppendSNS(uid, name string, kind uint8) error {
+func (mine *UserInfo) AppendSNS(uid, name string, kind uint8) error {
 	if len(uid) < 3 {
 		return errors.New("the sns uid is empty")
 	}
@@ -191,7 +191,7 @@ func (mine *UserInfo)AppendSNS(uid, name string, kind uint8) error {
 	return err
 }
 
-func (mine *UserInfo)SubtractSNS(uid string) error {
+func (mine *UserInfo) SubtractSNS(uid string) error {
 	if uid == "" {
 		return errors.New("the sns uid is empty")
 	}
@@ -200,7 +200,7 @@ func (mine *UserInfo)SubtractSNS(uid string) error {
 	}
 	err := nosql.SubtractUserSNS(mine.UID, uid)
 	if err == nil {
-		for i := 0; i < len(mine.SNS);i += 1 {
+		for i := 0; i < len(mine.SNS); i += 1 {
 			if mine.SNS[i].UID == uid {
 				mine.SNS = append(mine.SNS[:i], mine.SNS[i+1:]...)
 				break
