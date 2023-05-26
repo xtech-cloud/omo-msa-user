@@ -14,8 +14,8 @@ type Wechat struct {
 	UUID        string             `json:"uuid" bson:"uuid"`
 	ID          uint64             `json:"id" bson:"id"`
 	Name        string             `json:"name" bson:"name"`
-	Creator     string `json:"creator" bson:"creator"`
-	Operator    string `json:"operator" bson:"operator"`
+	Creator     string             `json:"creator" bson:"creator"`
+	Operator    string             `json:"operator" bson:"operator"`
 	CreatedTime time.Time          `json:"createdAt" bson:"createdAt"`
 	UpdatedTime time.Time          `json:"updatedAt" bson:"updatedAt"`
 	DeleteTime  time.Time          `json:"deleteAt" bson:"deleteAt"`
@@ -54,7 +54,7 @@ func GetWechatCount() int64 {
 }
 
 func UpdateWechatBase(uid string, name, open, union, port, operator string) error {
-	msg := bson.M{"name": name, "oid": open, "uuid": union, "port": port,"operator": operator, "updatedAt": time.Now()}
+	msg := bson.M{"name": name, "oid": open, "uuid": union, "port": port, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableWechat, uid, msg)
 	return err
 }

@@ -18,11 +18,11 @@ type Behaviour struct {
 	Operator    string             `json:"operator" bson:"operator"`
 
 	// 目标类型
-	Type uint8    `json:"type" bson:"type"`
-	User   string   `json:"user" bson:"user"`
-	Target string   `json:"target" bson:"target"`
+	Type   uint8  `json:"type" bson:"type"`
+	User   string `json:"user" bson:"user"`
+	Target string `json:"target" bson:"target"`
 	// 动作
-	Action   uint8 `json:"action" bson:"action"`
+	Action uint8 `json:"action" bson:"action"`
 }
 
 func CreateBehaviour(info *Behaviour) error {
@@ -52,7 +52,7 @@ func GetBehaviour(uid string) (*Behaviour, error) {
 }
 
 func GetBehaviourHistories(user string, act, kind uint8, num int64) ([]*Behaviour, error) {
-	msg := bson.M{"user": user, "action": act, "type":kind}
+	msg := bson.M{"user": user, "action": act, "type": kind}
 	cursor, err1 := findMany(TableBehaviour, msg, num)
 	if err1 != nil {
 		return nil, err1
@@ -71,7 +71,7 @@ func GetBehaviourHistories(user string, act, kind uint8, num int64) ([]*Behaviou
 }
 
 func GetBehaviourByType(user string, kind uint8, num int64) ([]*Behaviour, error) {
-	msg := bson.M{"user": user, "type":kind}
+	msg := bson.M{"user": user, "type": kind}
 	cursor, err1 := findMany(TableBehaviour, msg, num)
 	if err1 != nil {
 		return nil, err1
@@ -89,8 +89,8 @@ func GetBehaviourByType(user string, kind uint8, num int64) ([]*Behaviour, error
 	return items, nil
 }
 
-func GetBehaviourByAct(user, target string,kind uint8) (*Behaviour, error) {
-	msg := bson.M{"user": user, "target": target, "type":kind, "deleteAt": new(time.Time)}
+func GetBehaviourByAct(user, target string, kind uint8) (*Behaviour, error) {
+	msg := bson.M{"user": user, "target": target, "type": kind, "deleteAt": new(time.Time)}
 	result, err := findOneBy(TableBehaviour, msg)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func GetBehavioursByTarget(user, target string) ([]*Behaviour, error) {
 }
 
 func GetBehavioursByAction(target string, act uint8) ([]*Behaviour, error) {
-	msg := bson.M{"target": target, "action":act, "deleteAt": new(time.Time)}
+	msg := bson.M{"target": target, "action": act, "deleteAt": new(time.Time)}
 	cursor, err1 := findMany(TableBehaviour, msg, 50)
 	if err1 != nil {
 		return nil, err1
@@ -156,7 +156,7 @@ func GetBehavioursByAction(target string, act uint8) ([]*Behaviour, error) {
 }
 
 func GetBehaviourCountByAction(target string, act uint8) (int64, error) {
-	msg := bson.M{"target": target, "action":act, "deleteAt": new(time.Time)}
+	msg := bson.M{"target": target, "action": act, "deleteAt": new(time.Time)}
 	return getCountByFilter(TableBehaviour, msg)
 }
 
@@ -166,7 +166,7 @@ func GetBehaviourCountByUser(user string) (int64, error) {
 }
 
 func UpdateBehaviourAction(user, target string, act uint8) error {
-	filter := bson.M{"user":user, "target": target}
+	filter := bson.M{"user": user, "target": target}
 	update := bson.M{"$set": bson.M{"action": act, "updatedAt": time.Now()}}
 	_, err := updateOneBy(TableBehaviour, filter, update)
 	return err

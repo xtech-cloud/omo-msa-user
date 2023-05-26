@@ -10,14 +10,14 @@ import (
 
 const (
 	ActionUnknown ActionType = 0
-	ActionVisit ActionType = 1
-	ActionCare ActionType = 2
+	ActionVisit   ActionType = 1
+	ActionCare    ActionType = 2
 )
 
 const (
-	TargetTypeAlbum TargetType = 1
+	TargetTypeAlbum      TargetType = 1
 	TargetTypeCollective TargetType = 2
-	TargetTypeActivity TargetType = 3
+	TargetTypeActivity   TargetType = 3
 )
 
 type ActionType uint8
@@ -43,22 +43,22 @@ func (mine *cacheContext) createBehaviour(user, target string, kind TargetType, 
 	return err
 }
 
-func (mine *cacheContext)removeBehaviour(user, target string) error {
-	db,err := nosql.GetBehaviourByTarget(user, target)
+func (mine *cacheContext) removeBehaviour(user, target string) error {
+	db, err := nosql.GetBehaviourByTarget(user, target)
 	if err != nil {
 		return err
 	}
 	return nosql.RemoveBehaviour(db.UID.Hex(), "")
 }
 
-func (mine *cacheContext)UpdateBehaviour(user, target string, act ActionType) error {
+func (mine *cacheContext) UpdateBehaviour(user, target string, act ActionType) error {
 	err := nosql.UpdateBehaviourAction(user, target, uint8(act))
 	return err
 }
 
-func (mine *cacheContext)AddBehaviour(user, target string, kind TargetType, act ActionType) error {
-	had,err := mine.HadBehaviour(user, target)
-	if err != nil{
+func (mine *cacheContext) AddBehaviour(user, target string, kind TargetType, act ActionType) error {
+	had, err := mine.HadBehaviour(user, target)
+	if err != nil {
 		return err
 	}
 	if had {
@@ -67,9 +67,9 @@ func (mine *cacheContext)AddBehaviour(user, target string, kind TargetType, act 
 	return mine.createBehaviour(user, target, kind, act)
 }
 
-func (mine *cacheContext)HadBehaviour(user, target string) (bool,error) {
-	db,err := nosql.GetBehaviourByTarget(user, target)
-	if err != nil && !strings.Contains(err.Error(),"no documents in result"){
+func (mine *cacheContext) HadBehaviour(user, target string) (bool, error) {
+	db, err := nosql.GetBehaviourByTarget(user, target)
+	if err != nil && !strings.Contains(err.Error(), "no documents in result") {
 		return false, err
 	}
 	if db != nil {
@@ -78,18 +78,18 @@ func (mine *cacheContext)HadBehaviour(user, target string) (bool,error) {
 	return false, nil
 }
 
-func (mine *cacheContext)GetBehaviourCountByUser(user string) int64 {
+func (mine *cacheContext) GetBehaviourCountByUser(user string) int64 {
 	num, _ := nosql.GetBehaviourCountByUser(user)
 	return num
 }
 
-func (mine *cacheContext)GetBehaviourCount(target string, act ActionType) int64 {
+func (mine *cacheContext) GetBehaviourCount(target string, act ActionType) int64 {
 	num, _ := nosql.GetBehaviourCountByAction(target, uint8(act))
 	return num
 }
 
 // 获取用户浏览历史数据
-func (mine *cacheContext)GetBehaviourHistories(user string, kind TargetType) []*nosql.Behaviour {
+func (mine *cacheContext) GetBehaviourHistories(user string, kind TargetType) []*nosql.Behaviour {
 	list, err := nosql.GetBehaviourByType(user, uint8(kind), 20)
 	if err != nil {
 		logger.Error(err.Error())

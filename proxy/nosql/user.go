@@ -18,18 +18,19 @@ type User struct {
 	Creator     string             `json:"creator" bson:"creator"`
 	Operator    string             `json:"operator" bson:"operator"`
 
-	Name    string `json:"name" bson:"name"`
-	Account string `json:"account" bson:"account"`
-	Remark  string `json:"remark" bson:"remark"`
-	Type    uint8  `json:"type" bson:"type"`
-	Nick    string `json:"nick" bson:"nick"`
-	Phone   string `json:"phone" bson:"phone"`
-	Sex     uint8  `json:"sex" bson:"sex"`
-	Entity  string `json:"entity" bson:"entity"`
-	Portrait string `json:"portrait" bson:"portrait"`
-	Tags  []string `json:"tags" bson:"tags"`
-	SNS     []proxy.SNSInfo `json:"sns" bson:"sns"`
-	Follows []string `json:"follows" bson:"follows"`
+	Name     string          `json:"name" bson:"name"`
+	Account  string          `json:"account" bson:"account"`
+	Remark   string          `json:"remark" bson:"remark"`
+	Type     uint8           `json:"type" bson:"type"`
+	Nick     string          `json:"nick" bson:"nick"`
+	Phone    string          `json:"phone" bson:"phone"`
+	Sex      uint8           `json:"sex" bson:"sex"`
+	Entity   string          `json:"entity" bson:"entity"`
+	Portrait string          `json:"portrait" bson:"portrait"`
+	Tags     []string        `json:"tags" bson:"tags"`
+	Follows  []string        `json:"follows" bson:"follows"`
+	Relates  []string        `json:"relates" bson:"relates"`
+	SNS      []proxy.SNSInfo `json:"sns" bson:"sns"`
 }
 
 func CreateUser(info *User) error {
@@ -197,13 +198,19 @@ func UpdateUserEntity(uid, entity, operator string) error {
 }
 
 func UpdateUserPortrait(uid string, icon, operator string) error {
-	msg := bson.M{"portrait": icon, "operator": operator,  "updatedAt": time.Now()}
+	msg := bson.M{"portrait": icon, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }
 
 func UpdateUserFollows(uid string, list []string) error {
-	msg := bson.M{"follows": list, "operator": uid,  "updatedAt": time.Now()}
+	msg := bson.M{"follows": list, "operator": uid, "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserRelates(uid string, list []string) error {
+	msg := bson.M{"relates": list, "operator": uid, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

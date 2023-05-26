@@ -1,6 +1,5 @@
 package nosql
 
-
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,8 +16,8 @@ type Account struct {
 	Creator     string             `json:"creator" bson:"creator"`
 	Operator    string             `json:"operator" bson:"operator"`
 
-	Name    string `json:"name" bson:"name"`
-	Status  uint8 `json:"status" bson:"status"`
+	Name      string `json:"name" bson:"name"`
+	Status    uint8  `json:"status" bson:"status"`
 	Passwords string `json:"passwords" bson:"passwords"`
 }
 
@@ -85,7 +84,6 @@ func getOldAccounts() ([]*Account, error) {
 	}
 	return items, nil
 }
-
 
 func GetAllAccounts() ([]*Account, error) {
 	cursor, err1 := findAll(TableAccount, 0)

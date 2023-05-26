@@ -24,7 +24,6 @@ type BaseInfo struct {
 }
 
 type cacheContext struct {
-
 }
 
 var cacheCtx *cacheContext
@@ -42,7 +41,7 @@ func InitData() error {
 	logger.Infof("the user count = %d; the account count = %d and wechat count = %d", userNum, accNum, wxNum)
 	if accNum < 1 {
 		psw := CryptPsw(config.Schema.Root.Passwords)
-		account,er := cacheCtx.CreateAccount(config.Schema.Root.Name, psw, "system")
+		account, er := cacheCtx.CreateAccount(config.Schema.Root.Name, psw, "system")
 		if er != nil {
 			return er
 		}
@@ -54,8 +53,8 @@ func InitData() error {
 	return nil
 }
 
-func fixAllPsw(){
-	accounts,_ := nosql.GetAllAccounts()
+func fixAllPsw() {
+	accounts, _ := nosql.GetAllAccounts()
 	for _, account := range accounts {
 		if len(account.Passwords) == 32 {
 			nosql.UpdateAccountPasswords(account.UID.Hex(), CryptPsw(account.Passwords), "system")
@@ -63,11 +62,11 @@ func fixAllPsw(){
 	}
 }
 
-func testSignIn()  {
-	_,err := cacheCtx.SignIn("18990727722", "25d55ad283aa400af464c76d713c07ad")
+func testSignIn() {
+	_, err := cacheCtx.SignIn("18990727722", "25d55ad283aa400af464c76d713c07ad")
 	if err != nil {
 		fmt.Println(err.Error())
-	}else{
+	} else {
 		fmt.Println("success")
 	}
 }
@@ -82,7 +81,7 @@ func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInf
 	}
 	account := mine.getAccountByName(name)
 	if account != nil {
-		return account,nil
+		return account, nil
 	}
 
 	db := new(nosql.Account)
@@ -119,7 +118,7 @@ func CryptPsw(psw string) string {
 	if psw == "" {
 		return psw
 	}
-	hash,err := bcrypt.GenerateFromPassword([]byte(psw), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(psw), bcrypt.DefaultCost)
 	if err != nil {
 		logger.Error("crypt psw error: " + err.Error())
 		return psw
@@ -147,7 +146,7 @@ func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
 	if err == nil {
 		account := mine.GetAccount(db.Account)
 		if account != nil {
-			db,err := nosql.GetUserByEntity(entity)
+			db, err := nosql.GetUserByEntity(entity)
 			if err == nil {
 				user := new(UserInfo)
 				user.initInfo(db, account.Status)
@@ -218,7 +217,7 @@ func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
 	return nil
 }
 
-func (mine *cacheContext)RemoveUser(user, operator string) error {
+func (mine *cacheContext) RemoveUser(user, operator string) error {
 	account := mine.GetAccountByUser(user)
 	if account != nil {
 		return account.DeleteUser(user)
@@ -248,18 +247,18 @@ func (mine *cacheContext) SignIn(name, psw string) (string, error) {
 	//hash := "$2a$10$DlGnCj1SSfDaZbxUrXqJ6eEHrKFdgFa8n7MAJODE7zzvrr1SHa6e2"
 	err := bcrypt.CompareHashAndPassword([]byte(account.Passwords), []byte(psw))
 	if err != nil {
-		return "", errors.New("the passwords valid failed that hash = "+account.Passwords+" ; err = " + err.Error())
+		return "", errors.New("the passwords valid failed that hash = " + account.Passwords + " ; err = " + err.Error())
 	}
 	account.UpdateTime = time.Now()
 	if account.DefaultUser() == nil {
-		return "", errors.New("the account not found the user that name = "+name)
+		return "", errors.New("the account not found the user that name = " + name)
 	}
 	return account.DefaultUser().UID, nil
 }
 
 func (mine *cacheContext) AllUsers() []*UserInfo {
 	list := make([]*UserInfo, 0, 100)
-	all,err := nosql.GetAllUsers()
+	all, err := nosql.GetAllUsers()
 	if err == nil {
 		for _, db := range all {
 			acc := mine.GetAccount(db.Account)
@@ -279,12 +278,12 @@ func (mine *cacheContext) SearchUsers(kind pb.UserType, tags []string) []*UserIn
 	if kind < 1 {
 		return list
 	}
-	users,err := nosql.GetUsersByType(ty)
+	users, err := nosql.GetUsersByType(ty)
 	if err != nil {
 		return list
 	}
 	for _, user := range users {
-		if hadKey(user.Tags, tags){
+		if hadKey(user.Tags, tags) {
 			account := mine.GetAccount(user.Account)
 			if account != nil {
 				info := new(UserInfo)

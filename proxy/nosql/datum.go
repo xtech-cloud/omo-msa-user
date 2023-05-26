@@ -13,9 +13,9 @@ type Datum struct {
 	UpdatedTime time.Time          `json:"updatedAt" bson:"updatedAt"`
 	DeleteTime  time.Time          `json:"deleteAt" bson:"deleteAt"`
 
-	Job    string `json:"job" bson:"job"`
-	Sex    uint8  `json:"sex" bson:"sex"`
-	User   string `json:"user" bson:"user"`
+	Job  string `json:"job" bson:"job"`
+	Sex  uint8  `json:"sex" bson:"sex"`
+	User string `json:"user" bson:"user"`
 }
 
 func CreateDatum(info *Datum) error {
@@ -45,7 +45,7 @@ func GetDatum(uid string) (*Datum, error) {
 }
 
 func UpdateDatumBase(uid, name, phone, job string, sex uint8) error {
-	msg := bson.M{"name": name, "phone": phone, "job":job, "sex": sex, "updatedAt": time.Now()}
+	msg := bson.M{"name": name, "phone": phone, "job": job, "sex": sex, "updatedAt": time.Now()}
 	_, err := updateOne(TableDatum, uid, msg)
 	return err
 }

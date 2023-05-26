@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/micro/go-micro/v2/logger"
 	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
@@ -9,33 +10,33 @@ import (
 	"omo.msa.user/cache"
 )
 
-type UserService struct {}
+type UserService struct{}
 
 func switchUser(info *cache.UserInfo) *pb.UserInfo {
 	tmp := &pb.UserInfo{
-		Uid : info.UID,
-		Id : info.ID,
-		Type : pb.UserType(info.Type),
-		Account : info.Account,
-		Sex : pb.UserSex(info.Sex),
-		Phone : info.Phone,
-		Name : info.Name,
-		Remark : info.Remark,
-		Created : info.CreateTime.Unix(),
-		Updated : info.UpdateTime.Unix(),
+		Uid:      info.UID,
+		Id:       info.ID,
+		Type:     pb.UserType(info.Type),
+		Account:  info.Account,
+		Sex:      pb.UserSex(info.Sex),
+		Phone:    info.Phone,
+		Name:     info.Name,
+		Remark:   info.Remark,
+		Created:  info.CreateTime.Unix(),
+		Updated:  info.UpdateTime.Unix(),
 		Operator: info.Operator,
-		Creator: info.Creator,
-		Nick : info.NickName,
+		Creator:  info.Creator,
+		Nick:     info.NickName,
 		Portrait: info.Portrait,
-		Entity: info.Entity,
-		Follows: info.Follows,
-		Status: uint32(info.Status),
-		Tags: info.Tags,
+		Entity:   info.Entity,
+		Follows:  info.Follows,
+		Status:   uint32(info.Status),
+		Tags:     info.Tags,
 	}
 	return tmp
 }
 
-func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
+func (mine *UserService) AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
 	path := "user.add"
 	inLog(path, in)
 	var err error
@@ -43,16 +44,16 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 	if len(in.Account) > 1 {
 		account = cache.Context().GetAccount(in.Account)
 		if account == nil {
-			out.Status = outError(path,"the account not found ", pbstatus.ResultStatus_NotExisted)
+			out.Status = outError(path, "the account not found ", pbstatus.ResultStatus_NotExisted)
 			return nil
 		}
-	}else{
+	} else {
 		psw := cache.CryptPsw(in.Passwords)
 		if in.Type == pb.UserType_SuperRoot {
 			account, err = cache.Context().CreateAccount(in.Name, psw, in.Operator)
-		}else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
+		} else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
 			account, err = cache.Context().CreateAccount(in.Phone, psw, in.Operator)
-		}else{
+		} else {
 			name := in.Phone
 			if name == "" {
 				if in.Sns != nil && len(in.Sns.Uid) > 0 {
@@ -62,17 +63,17 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 			account, err = cache.Context().CreateAccount(name, psw, in.Operator)
 		}
 		if err != nil {
-			out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+			out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 			return nil
 		}
 	}
 
-	user,err1 := account.CreateUser(in)
+	user, err1 := account.CreateUser(in)
 	if err1 != nil {
-		out.Status = outError(path,err1.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err1.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
-	if len(user.Phone) < 1 && len(in.Phone) > 1{
+	if len(user.Phone) < 1 && len(in.Phone) > 1 {
 		_ = user.UpdatePhone(in.Phone, in.Operator)
 	}
 	if uint8(in.Type) < user.Type && in.Type > 0 {
@@ -81,7 +82,7 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 	if in.Sns != nil && len(in.Sns.Uid) > 2 {
 		er := user.AppendSNS(in.Sns.Uid, in.Sns.Name, uint8(in.Sns.Type))
 		if er != nil {
-			out.Status = outError(path,er.Error(), pbstatus.ResultStatus_DBException)
+			out.Status = outError(path, er.Error(), pbstatus.ResultStatus_DBException)
 			return nil
 		}
 	}
@@ -90,17 +91,17 @@ func (mine *UserService)AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.R
 	return nil
 }
 
-func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+func (mine *UserService) GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
 	path := "user.get"
 	inLog(path, in)
 	var info *cache.UserInfo
 	if len(in.Uid) > 0 {
 		info = cache.Context().GetUser(in.Uid)
-	}else if len(in.Entity) > 0 {
+	} else if len(in.Entity) > 0 {
 		info = cache.Context().GetUserByEntity(in.Entity)
 	}
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 
@@ -109,25 +110,25 @@ func (mine *UserService)GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.
 	return nil
 }
 
-func (mine *UserService)RemoveOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
+func (mine *UserService) RemoveOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyInfo) error {
 	path := "user.removeOne"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	//out.Status = outError(path,"the user cannot remove ", pbstatus.ResultStatus_DBException)
 	//return nil
 	err := cache.Context().RemoveUser(in.Uid, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)
 	return nil
 }
 
-func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb.ReplyUserList) error {
+func (mine *UserService) GetList(ctx context.Context, in *pb.ReqUserList, out *pb.ReplyUserList) error {
 	path := "user.list"
 	inLog(path, in)
 	out.List = make([]*pb.UserInfo, 0, len(in.List))
@@ -135,24 +136,24 @@ func (mine *UserService)GetList(ctx context.Context, in *pb.ReqUserList, out *pb
 		info := cache.Context().GetUser(value)
 		if info != nil {
 			out.List = append(out.List, switchUser(info))
-		}else{
-			logger.Warn("not found the user("+value+")")
+		} else {
+			logger.Warn("not found the user(" + value + ")")
 		}
 	}
 	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
 	return nil
 }
 
-func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *pb.ReplyUserList) error {
+func (mine *UserService) GetByPage(ctx context.Context, in *pb.RequestPage, out *pb.ReplyUserList) error {
 	path := "user.getByPage"
 	inLog(path, in)
 	out.List = make([]*pb.UserInfo, 0, in.Number)
 	users := cache.Context().AllUsers()
 	total := uint32(len(users))
-	out.PageMax = total / in.Number + 1
+	out.PageMax = total/in.Number + 1
 	var i uint32 = 0
-	for ;i < total;i += 1{
-		t := i / in.Number + 1
+	for ; i < total; i += 1 {
+		t := i/in.Number + 1
 		if t == in.Page {
 			out.List = append(out.List, switchUser(users[i]))
 		}
@@ -163,29 +164,29 @@ func (mine *UserService)GetByPage(ctx context.Context, in *pb.RequestPage, out *
 	return nil
 }
 
-func (mine *UserService) GetByKey (ctx context.Context, in *pb.ReqUserSearch, out *pb.ReplyUserList) error {
+func (mine *UserService) GetByKey(ctx context.Context, in *pb.ReqUserSearch, out *pb.ReplyUserList) error {
 	path := "user.getByKey"
 	inLog(path, in)
 
 	users := cache.Context().SearchUsers(in.Type, in.Tags)
 	out.List = make([]*pb.UserInfo, 0, len(users))
-	for i := 0;i < len(users);i += 1{
+	for i := 0; i < len(users); i += 1 {
 		out.List = append(out.List, switchUser(users[i]))
 	}
 	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
 	return nil
 }
 
-func (mine *UserService) GetBySNS (ctx context.Context, in *pb.ReqUserBy, out *pb.ReplyUserOne) error {
+func (mine *UserService) GetBySNS(ctx context.Context, in *pb.ReqUserBy, out *pb.ReplyUserOne) error {
 	path := "user.getBySNS"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the sns uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the sns uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUserBySNS(in.Uid, uint8(in.Type))
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -193,16 +194,16 @@ func (mine *UserService) GetBySNS (ctx context.Context, in *pb.ReqUserBy, out *p
 	return nil
 }
 
-func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+func (mine *UserService) GetByPhone(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
 	path := "user.getByPhone"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the phone is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the phone is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUserByPhone(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -210,16 +211,16 @@ func (mine *UserService) GetByPhone (ctx context.Context, in *pb.RequestInfo, ou
 	return nil
 }
 
-func (mine *UserService) GetByID (ctx context.Context, in *pb.RequestIDInfo, out *pb.ReplyUserOne) error {
+func (mine *UserService) GetByID(ctx context.Context, in *pb.RequestIDInfo, out *pb.ReplyUserOne) error {
 	path := "user.getByID"
 	inLog(path, in)
 	if in.Id < 1 {
-		out.Status = outError(path,"the user id is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the user id is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUserByID(in.Id)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -227,16 +228,16 @@ func (mine *UserService) GetByID (ctx context.Context, in *pb.RequestIDInfo, out
 	return nil
 }
 
-func (mine *UserService) GetByEntity (ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
+func (mine *UserService) GetByEntity(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
 	path := "user.getByPhone"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the entity is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the entity is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUserByEntity(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -244,21 +245,21 @@ func (mine *UserService) GetByEntity (ctx context.Context, in *pb.RequestInfo, o
 	return nil
 }
 
-func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
+func (mine *UserService) UpdateBase(ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
 	path := "user.update"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	err := info.UpdateBase(in.Name, in.NickName, in.Remark, in.Portrait, in.Operator, uint8(in.Sex))
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -266,21 +267,21 @@ func (mine *UserService) UpdateBase (ctx context.Context, in *pb.ReqUserUpdate, 
 	return nil
 }
 
-func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity, out *pb.ReplyUserOne) error {
+func (mine *UserService) UpdateEntity(ctx context.Context, in *pb.ReqUserEntity, out *pb.ReplyUserOne) error {
 	path := "user.updateEntity"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	err := info.UpdateEntity(in.Entity, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -288,21 +289,21 @@ func (mine *UserService) UpdateEntity (ctx context.Context, in *pb.ReqUserEntity
 	return nil
 }
 
-func (mine *UserService) UpdateTags (ctx context.Context, in *pb.ReqUserTags, out *pb.ReplyUserOne) error {
+func (mine *UserService) UpdateTags(ctx context.Context, in *pb.ReqUserTags, out *pb.ReplyUserOne) error {
 	path := "user.updateTags"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	err := info.UpdateTags(in.Operator, in.Tags)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -310,26 +311,26 @@ func (mine *UserService) UpdateTags (ctx context.Context, in *pb.ReqUserTags, ou
 	return nil
 }
 
-func (mine *UserService) UpdateSNS (ctx context.Context, in *pb.ReqUserSNS, out *pb.ReplyUserOne) error {
+func (mine *UserService) UpdateSNS(ctx context.Context, in *pb.ReqUserSNS, out *pb.ReplyUserOne) error {
 	path := "user.updateSNS"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.User)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	var err error
 	if in.Add {
 		err = info.AppendSNS(in.Uid, in.Name, uint8(in.Type))
-	}else{
+	} else {
 		err = info.SubtractSNS(in.Uid)
 	}
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	out.Info = switchUser(info)
@@ -337,16 +338,16 @@ func (mine *UserService) UpdateSNS (ctx context.Context, in *pb.ReqUserSNS, out 
 	return nil
 }
 
-func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, out *pb.ReplyInfo) error {
+func (mine *UserService) UpdatePhone(ctx context.Context, in *pb.ReqUserPhone, out *pb.ReplyInfo) error {
 	path := "user.updatePhone"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	old := info.Phone
@@ -356,7 +357,7 @@ func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, 
 	}
 	err := info.UpdatePhone(in.Phone, in.Operator)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	account := cache.Context().GetAccountByUser(in.Uid)
@@ -367,21 +368,48 @@ func (mine *UserService) UpdatePhone (ctx context.Context, in *pb.ReqUserPhone, 
 	return nil
 }
 
-func (mine *UserService) UpdateFollows (ctx context.Context, in *pb.RequestList, out *pb.ReplyInfo) error {
+func (mine *UserService) UpdateFollows(ctx context.Context, in *pb.RequestList, out *pb.ReplyInfo) error {
 	path := "user.updateFollows"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
-		out.Status = outError(path,"the uid is empty ", pbstatus.ResultStatus_Empty)
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
-		out.Status = outError(path,"the user not found ", pbstatus.ResultStatus_NotExisted)
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
 		return nil
 	}
 	err := info.UpdateFollows(in.List)
 	if err != nil {
-		out.Status = outError(path,err.Error(), pbstatus.ResultStatus_DBException)
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
+		return nil
+	}
+	out.Status = outLog(path, out)
+	return nil
+}
+
+func (mine *UserService) UpdateByFilter(ctx context.Context, in *pb.ReqUpdateFilter, out *pb.ReplyInfo) error {
+	path := "user.updateByFilter"
+	inLog(path, in)
+	if len(in.Uid) < 1 {
+		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
+		return nil
+	}
+	info := cache.Context().GetUser(in.Uid)
+	if info == nil {
+		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
+		return nil
+	}
+	var err error
+	if in.Key == "relates" {
+		err = info.UpdateRelates(in.Values)
+	} else {
+		err = errors.New("the key not defined")
+	}
+
+	if err != nil {
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
 	out.Status = outLog(path, out)

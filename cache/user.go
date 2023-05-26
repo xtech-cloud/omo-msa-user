@@ -20,6 +20,7 @@ type UserInfo struct {
 	Portrait string
 	Tags     []string
 	Follows  []string
+	Relates  []string
 	SNS      []proxy.SNSInfo
 }
 
@@ -48,6 +49,10 @@ func (mine *UserInfo) initInfo(db *nosql.User, st uint8) {
 	mine.Follows = db.Follows
 	if mine.Follows == nil {
 		mine.Follows = make([]string, 0, 5)
+	}
+	mine.Relates = db.Relates
+	if mine.Relates == nil {
+		mine.Relates = make([]string, 0, 5)
 	}
 	mine.SNS = db.SNS
 	if mine.SNS == nil {
@@ -86,6 +91,16 @@ func (mine *UserInfo) UpdateFollows(list []string) error {
 	err := nosql.UpdateUserFollows(mine.UID, list)
 	if err == nil {
 		mine.Follows = list
+		mine.UpdateTime = time.Now()
+	}
+	return err
+}
+
+func (mine *UserInfo) UpdateRelates(list []string) error {
+	err := nosql.UpdateUserRelates(mine.UID, list)
+	if err == nil {
+		mine.Relates = list
+		mine.UpdateTime = time.Now()
 	}
 	return err
 }

@@ -7,7 +7,7 @@ type DatumInfo struct {
 	Job string
 }
 
-func (mine *DatumInfo)initInfo(db *nosql.Datum)  {
+func (mine *DatumInfo) initInfo(db *nosql.Datum) {
 	mine.UID = db.UID.Hex()
 	mine.Job = db.Job
 }

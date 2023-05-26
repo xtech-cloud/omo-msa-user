@@ -6,7 +6,6 @@ import (
 
 	"omo.msa.user/config"
 
-
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/client"
 	"github.com/micro/go-micro/v2/logger"
