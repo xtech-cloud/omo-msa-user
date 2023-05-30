@@ -30,6 +30,7 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Portrait: info.Portrait,
 		Entity:   info.Entity,
 		Follows:  info.Follows,
+		Relates:  info.Relates,
 		Status:   uint32(info.Status),
 		Tags:     info.Tags,
 	}
