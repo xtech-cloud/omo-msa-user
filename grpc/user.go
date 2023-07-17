@@ -38,7 +38,7 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 }
 
 func (mine *UserService) AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.ReplyUserOne) error {
-	path := "user.add"
+	path := "user.addOne"
 	inLog(path, in)
 	var err error
 	var account *cache.AccountInfo
@@ -50,19 +50,22 @@ func (mine *UserService) AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.
 		}
 	} else {
 		psw := cache.CryptPsw(in.Passwords)
-		if in.Type == pb.UserType_SuperRoot {
-			account, err = cache.Context().CreateAccount(in.Name, psw, in.Operator)
-		} else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
-			account, err = cache.Context().CreateAccount(in.Phone, psw, in.Operator)
-		} else {
-			name := in.Phone
-			if name == "" {
-				if in.Sns != nil && len(in.Sns.Uid) > 0 {
-					name = in.Sns.Uid
-				}
+		//if in.Type == pb.UserType_SuperRoot {
+		//	account, err = cache.Context().CreateAccount(in.Name, psw, in.Operator)
+		//} else if in.Type == pb.UserType_EnterpriseAdmin || in.Type == pb.UserType_EnterpriseCommon {
+		//	account, err = cache.Context().CreateAccount(in.Phone, psw, in.Operator)
+		//} else {
+		//
+		//}
+		name := in.Phone
+		if name == "" {
+			if in.Sns != nil && len(in.Sns.Uid) > 0 {
+				name = in.Sns.Uid
+			} else {
+				name = in.Name
 			}
-			account, err = cache.Context().CreateAccount(name, psw, in.Operator)
 		}
+		account, err = cache.Context().CreateAccount(name, psw, in.Operator)
 		if err != nil {
 			out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 			return nil
@@ -93,13 +96,15 @@ func (mine *UserService) AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.
 }
 
 func (mine *UserService) GetOne(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
-	path := "user.get"
+	path := "user.getOne"
 	inLog(path, in)
 	var info *cache.UserInfo
 	if len(in.Uid) > 0 {
 		info = cache.Context().GetUser(in.Uid)
 	} else if len(in.Entity) > 0 {
 		info = cache.Context().GetUserByEntity(in.Entity)
+	} else if len(in.Operator) > 0 {
+		info = cache.Context().GetUserByName(in.Operator)
 	}
 	if info == nil {
 		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)
@@ -230,7 +235,7 @@ func (mine *UserService) GetByID(ctx context.Context, in *pb.RequestIDInfo, out 
 }
 
 func (mine *UserService) GetByEntity(ctx context.Context, in *pb.RequestInfo, out *pb.ReplyUserOne) error {
-	path := "user.getByPhone"
+	path := "user.getByEntity"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
 		out.Status = outError(path, "the entity is empty ", pbstatus.ResultStatus_Empty)
@@ -247,7 +252,7 @@ func (mine *UserService) GetByEntity(ctx context.Context, in *pb.RequestInfo, ou
 }
 
 func (mine *UserService) UpdateBase(ctx context.Context, in *pb.ReqUserUpdate, out *pb.ReplyUserOne) error {
-	path := "user.update"
+	path := "user.updateBase"
 	inLog(path, in)
 	if len(in.Uid) < 1 {
 		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)

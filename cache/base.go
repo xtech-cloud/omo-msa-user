@@ -141,6 +141,17 @@ func (mine *cacheContext) GetUserByID(id uint64) *UserInfo {
 	return nil
 }
 
+func (mine *cacheContext) GetUserByName(name string) *UserInfo {
+	db, err := nosql.GetAccountByName(name)
+	if err == nil {
+		acc := new(AccountInfo)
+		acc.initInfo(db)
+		acc.initUsers()
+		return acc.DefaultUser()
+	}
+	return nil
+}
+
 func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
 	db, err := nosql.GetUserByEntity(entity)
 	if err == nil {
