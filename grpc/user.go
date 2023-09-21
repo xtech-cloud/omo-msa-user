@@ -183,6 +183,14 @@ func (mine *UserService) GetByKey(ctx context.Context, in *pb.ReqUserSearch, out
 	return nil
 }
 
+func (mine *UserService) GetStatistic(ctx context.Context, in *pb.RequestPage, out *pb.ReplyStatistic) error {
+	path := "user.getStatistic"
+	inLog(path, in)
+
+	out.Status = outLog(path, out)
+	return nil
+}
+
 func (mine *UserService) GetBySNS(ctx context.Context, in *pb.ReqUserBy, out *pb.ReplyUserOne) error {
 	path := "user.getBySNS"
 	inLog(path, in)

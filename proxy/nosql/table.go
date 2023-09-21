@@ -19,4 +19,5 @@ const (
 	TableDatum     = "datum"
 	TableWechat    = "wechat"
 	TableBehaviour = "behaviours"
+	TableMessage   = "messages"
 )

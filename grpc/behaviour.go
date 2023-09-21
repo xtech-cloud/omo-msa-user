@@ -27,7 +27,13 @@ func switchBehaviour(info *nosql.Behaviour) *pb.BehaviourInfo {
 func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd, out *pb.ReplyInfo) error {
 	path := "behaviour.addOne"
 	inLog(path, in)
-	err := cache.Context().AddBehaviour(in.User, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
+	var err error
+	msg, _ := cache.Context().GetMessagesByQuote(in.User, in.Target)
+	if msg != nil {
+		err = msg.Read()
+	} else {
+		err = cache.Context().AddBehaviour(in.User, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
+	}
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
@@ -43,6 +49,12 @@ func (mine *BehaviourService) HadOne(ctx context.Context, in *pb.ReqBehaviourChe
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
+	}
+	if !had {
+		msg, _ := cache.Context().GetMessagesByQuote(in.User, in.Target)
+		if msg != nil && msg.Status == cache.MessageRead {
+			had = true
+		}
 	}
 	out.Had = had
 	out.Status = outLog(path, out)
@@ -95,5 +107,13 @@ func (mine *BehaviourService) GetList(ctx context.Context, in *pb.ReqBehaviourLi
 		out.List = append(out.List, switchBehaviour(behaviour))
 	}
 	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
+	return nil
+}
+
+func (mine *BehaviourService) GetStatistic(ctx context.Context, in *pb.RequestPage, out *pb.ReplyStatistic) error {
+	path := "behaviour.getStatistic"
+	inLog(path, in)
+
+	out.Status = outLog(path, out)
 	return nil
 }

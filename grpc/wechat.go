@@ -84,3 +84,11 @@ func (mine *WechatService) UpdateBase(ctx context.Context, in *pb.ReqWechatUpdat
 	out.Status = outLog(path, out)
 	return nil
 }
+
+func (mine *WechatService) GetStatistic(ctx context.Context, in *pb.RequestPage, out *pb.ReplyStatistic) error {
+	path := "wechat.getStatistic"
+	inLog(path, in)
+
+	out.Status = outLog(path, out)
+	return nil
+}

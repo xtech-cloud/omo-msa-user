@@ -127,3 +127,11 @@ func (mine *AccountService) UpdateStatus(ctx context.Context, in *pb.ReqAccountS
 	out.Status = outLog(path, out)
 	return nil
 }
+
+func (mine *AccountService) GetStatistic(ctx context.Context, in *pb.RequestPage, out *pb.ReplyStatistic) error {
+	path := "account.getStatistic"
+	inLog(path, in)
+
+	out.Status = outLog(path, out)
+	return nil
+}

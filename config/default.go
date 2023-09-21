@@ -17,7 +17,7 @@ const defaultJson string = `{
 	},
 	"database": {
 		"name": "userCloud",
-		"ip": "192.168.1.31",
+		"ip": "192.168.1.10",
 		"port": "27017",
 		"user": "root",
 		"password": "pass2019",
