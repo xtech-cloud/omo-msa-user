@@ -8,6 +8,7 @@ import (
 	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
+	"strings"
 )
 
 type UserService struct{}
@@ -42,6 +43,8 @@ func (mine *UserService) AddOne(ctx context.Context, in *pb.ReqUserAdd, out *pb.
 	inLog(path, in)
 	var err error
 	var account *cache.AccountInfo
+	in.Name = strings.TrimSpace(in.Name)
+	in.Nick = strings.TrimSpace(in.Nick)
 	if len(in.Account) > 1 {
 		account = cache.Context().GetAccount(in.Account)
 		if account == nil {
@@ -266,6 +269,8 @@ func (mine *UserService) UpdateBase(ctx context.Context, in *pb.ReqUserUpdate, o
 		out.Status = outError(path, "the uid is empty ", pbstatus.ResultStatus_Empty)
 		return nil
 	}
+	in.Name = strings.TrimSpace(in.Name)
+	in.NickName = strings.TrimSpace(in.NickName)
 	info := cache.Context().GetUser(in.Uid)
 	if info == nil {
 		out.Status = outError(path, "the user not found ", pbstatus.ResultStatus_NotExisted)

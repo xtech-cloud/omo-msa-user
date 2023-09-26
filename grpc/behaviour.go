@@ -28,7 +28,7 @@ func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd
 	path := "behaviour.addOne"
 	inLog(path, in)
 	var err error
-	msg, _ := cache.Context().GetMessagesByQuote(in.User, in.Target)
+	msg, _ := cache.Context().GetMessageByQuote(in.User, in.Target)
 	if msg != nil {
 		err = msg.Read()
 	} else {
@@ -51,7 +51,7 @@ func (mine *BehaviourService) HadOne(ctx context.Context, in *pb.ReqBehaviourChe
 		return nil
 	}
 	if !had {
-		msg, _ := cache.Context().GetMessagesByQuote(in.User, in.Target)
+		msg, _ := cache.Context().GetMessageByQuote(in.User, in.Target)
 		if msg != nil && msg.Status == cache.MessageRead {
 			had = true
 		}

@@ -28,7 +28,7 @@ type MessageInfo struct {
 }
 
 func (mine *MessageInfo) Awake() error {
-	if mine.Status == MessageAwake {
+	if mine.Status != MessageSleep {
 		return nil
 	}
 	err := nosql.UpdateMessageStatus(mine.UID, uint8(MessageAwake))
@@ -113,7 +113,7 @@ func (mine *cacheContext) GetMessagesByUser(user string) []*MessageInfo {
 	return list
 }
 
-func (mine *cacheContext) GetMessagesByQuote(user, quote string) (*MessageInfo, error) {
+func (mine *cacheContext) GetMessageByQuote(user, quote string) (*MessageInfo, error) {
 	if user == "" || quote == "" {
 		return nil, errors.New("the user or quote is empty")
 	}

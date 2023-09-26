@@ -34,7 +34,7 @@ func (mine *MessageService) AddOne(ctx context.Context, in *pb.ReqMessageAdd, ou
 		out.Status = outError(path, "the user or quote is empty", pbstatus.ResultStatus_Empty)
 		return nil
 	}
-	info, _ := cache.Context().GetMessagesByQuote(in.User, in.Quote)
+	info, _ := cache.Context().GetMessageByQuote(in.User, in.Quote)
 	if info == nil {
 		err := cache.Context().CreateMessage(in.Owner, in.User, in.Quote, in.Operator, in.Type, in.Stamp, in.Targets)
 		if err != nil {
@@ -61,7 +61,7 @@ func (mine *MessageService) GetList(ctx context.Context, in *pb.RequestPage, out
 	if in.Key == "user" {
 		list = cache.Context().GetMessagesByUser(in.Value)
 	} else if in.Key == "quote" {
-		msg, _ := cache.Context().GetMessagesByQuote(in.Param, in.Value)
+		msg, _ := cache.Context().GetMessageByQuote(in.Param, in.Value)
 		if msg != nil {
 			list = make([]*cache.MessageInfo, 0, 1)
 			list = append(list, msg)
