@@ -27,6 +27,15 @@ type MessageInfo struct {
 	Targets []string //用户下面的目标实体
 }
 
+func UpdateMessageType() {
+	dbs, _ := nosql.GetAllMessages()
+	for _, db := range dbs {
+		if db.Type == 1 {
+			_ = nosql.UpdateMessageType(db.UID.Hex(), 0)
+		}
+	}
+}
+
 func (mine *MessageInfo) Awake() error {
 	if mine.Status != MessageSleep {
 		return nil

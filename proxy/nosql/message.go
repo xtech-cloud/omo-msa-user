@@ -155,6 +155,12 @@ func UpdateMessageStatus(uid string, st uint8) error {
 	return err
 }
 
+func UpdateMessageType(uid string, tp uint8) error {
+	msg := bson.M{"type": tp, "updatedAt": time.Now()}
+	_, err := updateOne(TableMessage, uid, msg)
+	return err
+}
+
 func UpdateMessageTargets(uid string, targets []string) error {
 	msg := bson.M{"targets": targets, "updatedAt": time.Now()}
 	_, err := updateOne(TableMessage, uid, msg)

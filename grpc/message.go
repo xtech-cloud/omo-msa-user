@@ -75,11 +75,14 @@ func (mine *MessageService) GetList(ctx context.Context, in *pb.RequestPage, out
 	//	out.Status = outError(path, "", pbstatus.ResultStatus_DBException)
 	//	return nil
 	//}
+	t, p, arr := cache.CheckPage(in.Page, in.Number, list)
 	out.List = make([]*pb.MessageInfo, 0, len(list))
-	for _, message := range list {
+	for _, message := range arr {
 		_ = message.Awake()
 		out.List = append(out.List, switchMessage(message))
 	}
+	out.Total = t
+	out.Pages = p
 	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
 	return nil
 }

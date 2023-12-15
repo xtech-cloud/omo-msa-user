@@ -21,6 +21,80 @@ type AccountInfo struct {
 	Users     []*UserInfo
 }
 
+func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInfo, error) {
+	if len(name) < 2 {
+		return nil, errors.New("the account name is empty")
+	}
+	account := mine.getAccountByName(name)
+	if account != nil {
+		return account, nil
+	}
+
+	db := new(nosql.Account)
+	db.UID = primitive.NewObjectID()
+	db.ID = nosql.GetAccountNextID()
+	db.CreatedTime = time.Now()
+	db.Name = name
+	db.Passwords = psw
+	db.Creator = operator
+	err := nosql.CreateAccount(db)
+	if err == nil {
+		info := new(AccountInfo)
+		info.initInfo(db)
+		return info, nil
+	}
+	return nil, err
+}
+
+func (mine *cacheContext) GetAccount(uid string) *AccountInfo {
+	db, err := nosql.GetAccount(uid)
+	if err == nil {
+		info := new(AccountInfo)
+		info.initInfo(db)
+		return info
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetAccountByName(name string) *AccountInfo {
+	db, err := nosql.GetAccountByName(name)
+	if err == nil {
+		info := new(AccountInfo)
+		info.initInfo(db)
+		return info
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
+	db, err := nosql.GetUser(user)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			return account
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) RemoveUser(user, operator string) error {
+	account := mine.GetAccountByUser(user)
+	if account != nil {
+		return account.DeleteUser(user)
+	}
+	return nil
+}
+
+func (mine *cacheContext) getAccountByName(name string) *AccountInfo {
+	db, err := nosql.GetAccountByName(name)
+	if err == nil {
+		info := new(AccountInfo)
+		info.initInfo(db)
+		return info
+	}
+	return nil
+}
+
 func (mine *AccountInfo) initInfo(db *nosql.Account) {
 	mine.UID = db.UID.Hex()
 	mine.ID = db.ID

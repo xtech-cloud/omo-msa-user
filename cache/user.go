@@ -24,6 +24,90 @@ type UserInfo struct {
 	SNS      []proxy.SNSInfo
 }
 
+func (mine *cacheContext) GetUser(uid string) *UserInfo {
+	db, err := nosql.GetUser(uid)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			user := new(UserInfo)
+			user.initInfo(db, account.Status)
+			account.Users = append(account.Users, user)
+			return user
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserByID(id uint64) *UserInfo {
+	db, err := nosql.GetUserByID(id)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			user := new(UserInfo)
+			user.initInfo(db, account.Status)
+			account.Users = append(account.Users, user)
+			return user
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserByName(name string) *UserInfo {
+	db, err := nosql.GetAccountByName(name)
+	if err == nil {
+		acc := new(AccountInfo)
+		acc.initInfo(db)
+		acc.initUsers()
+		return acc.DefaultUser()
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
+	db, err := nosql.GetUserByEntity(entity)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			db, err := nosql.GetUserByEntity(entity)
+			if err == nil {
+				user := new(UserInfo)
+				user.initInfo(db, account.Status)
+				account.Users = append(account.Users, user)
+				return user
+			}
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
+	db, err := nosql.GetUserByPhone(phone)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			info := new(UserInfo)
+			info.initInfo(db, account.Status)
+			account.Users = append(account.Users, info)
+			return info
+		}
+	}
+	return nil
+}
+
+func (mine *cacheContext) GetUserBySNS(uid string, kind uint8) *UserInfo {
+	db, err := nosql.GetUserBySNS(uid)
+	if err == nil {
+		account := mine.GetAccount(db.Account)
+		if account != nil {
+			info := new(UserInfo)
+			info.initInfo(db, account.Status)
+			account.Users = append(account.Users, info)
+			return info
+		}
+	}
+	return nil
+}
+
 func (mine *UserInfo) initInfo(db *nosql.User, st uint8) {
 	mine.UID = db.UID.Hex()
 	mine.ID = db.ID

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/micro/go-micro/v2/logger"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"omo.msa.user/config"
 	"omo.msa.user/proxy/nosql"
@@ -50,6 +49,7 @@ func InitData() error {
 			return er
 		}
 	}
+	UpdateMessageType()
 	return nil
 }
 
@@ -75,43 +75,30 @@ func Context() *cacheContext {
 	return cacheCtx
 }
 
-func (mine *cacheContext) CreateAccount(name, psw, operator string) (*AccountInfo, error) {
-	if len(name) < 2 {
-		return nil, errors.New("the account name is empty")
+func CheckPage[T any](page, number uint32, all []T) (uint32, uint32, []T) {
+	if len(all) < 1 {
+		return 0, 0, make([]T, 0, 1)
 	}
-	account := mine.getAccountByName(name)
-	if account != nil {
-		return account, nil
+	if number < 1 {
+		number = 10
+	}
+	total := uint32(len(all))
+	if len(all) <= int(number) {
+		return total, 1, all
+	}
+	maxPage := total/number + 1
+	if page < 1 {
+		return total, maxPage, all
 	}
 
-	db := new(nosql.Account)
-	db.UID = primitive.NewObjectID()
-	db.ID = nosql.GetAccountNextID()
-	db.CreatedTime = time.Now()
-	db.Name = name
-	db.Passwords = psw
-	db.Creator = operator
-	err := nosql.CreateAccount(db)
-	if err == nil {
-		info := new(AccountInfo)
-		info.initInfo(db)
-		return info, nil
+	var start = (page - 1) * number
+	var end = start + number
+	if end > total-1 {
+		end = total - 1
 	}
-	return nil, err
-}
-
-func (mine *cacheContext) GetUser(uid string) *UserInfo {
-	db, err := nosql.GetUser(uid)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			user := new(UserInfo)
-			user.initInfo(db, account.Status)
-			account.Users = append(account.Users, user)
-			return user
-		}
-	}
-	return nil
+	list := make([]T, 0, number)
+	list = append(all[start:end])
+	return total, maxPage, list
 }
 
 func CryptPsw(psw string) string {
@@ -125,125 +112,6 @@ func CryptPsw(psw string) string {
 	}
 	logger.Info("crypt psw = " + string(hash))
 	return string(hash)
-}
-
-func (mine *cacheContext) GetUserByID(id uint64) *UserInfo {
-	db, err := nosql.GetUserByID(id)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			user := new(UserInfo)
-			user.initInfo(db, account.Status)
-			account.Users = append(account.Users, user)
-			return user
-		}
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetUserByName(name string) *UserInfo {
-	db, err := nosql.GetAccountByName(name)
-	if err == nil {
-		acc := new(AccountInfo)
-		acc.initInfo(db)
-		acc.initUsers()
-		return acc.DefaultUser()
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetUserByEntity(entity string) *UserInfo {
-	db, err := nosql.GetUserByEntity(entity)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			db, err := nosql.GetUserByEntity(entity)
-			if err == nil {
-				user := new(UserInfo)
-				user.initInfo(db, account.Status)
-				account.Users = append(account.Users, user)
-				return user
-			}
-		}
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetUserByPhone(phone string) *UserInfo {
-	db, err := nosql.GetUserByPhone(phone)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			info := new(UserInfo)
-			info.initInfo(db, account.Status)
-			account.Users = append(account.Users, info)
-			return info
-		}
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetUserBySNS(uid string, kind uint8) *UserInfo {
-	db, err := nosql.GetUserBySNS(uid)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			info := new(UserInfo)
-			info.initInfo(db, account.Status)
-			account.Users = append(account.Users, info)
-			return info
-		}
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetAccount(uid string) *AccountInfo {
-	db, err := nosql.GetAccount(uid)
-	if err == nil {
-		info := new(AccountInfo)
-		info.initInfo(db)
-		return info
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetAccountByName(name string) *AccountInfo {
-	db, err := nosql.GetAccountByName(name)
-	if err == nil {
-		info := new(AccountInfo)
-		info.initInfo(db)
-		return info
-	}
-	return nil
-}
-
-func (mine *cacheContext) GetAccountByUser(user string) *AccountInfo {
-	db, err := nosql.GetUser(user)
-	if err == nil {
-		account := mine.GetAccount(db.Account)
-		if account != nil {
-			return account
-		}
-	}
-	return nil
-}
-
-func (mine *cacheContext) RemoveUser(user, operator string) error {
-	account := mine.GetAccountByUser(user)
-	if account != nil {
-		return account.DeleteUser(user)
-	}
-	return nil
-}
-
-func (mine *cacheContext) getAccountByName(name string) *AccountInfo {
-	db, err := nosql.GetAccountByName(name)
-	if err == nil {
-		info := new(AccountInfo)
-		info.initInfo(db)
-		return info
-	}
-	return nil
 }
 
 func (mine *cacheContext) SignIn(name, psw string) (string, error) {
