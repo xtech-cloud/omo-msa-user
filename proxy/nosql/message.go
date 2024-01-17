@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -113,7 +114,8 @@ func GetMessageByTarget(target string) ([]*Message, error) {
 
 func GetMessagesByUser(user string) ([]*Message, error) {
 	msg := bson.M{"user": user, "deleteAt": new(time.Time)}
-	cursor, err1 := findMany(TableMessage, msg, 0)
+	opts := options.Find().SetSort(bson.D{{"id", -1}})
+	cursor, err1 := findManyByOpts(TableMessage, msg, opts)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -132,7 +134,8 @@ func GetMessagesByUser(user string) ([]*Message, error) {
 
 func GetMessagesByQuote(user, quote string) (*Message, error) {
 	msg := bson.M{"user": user, "quote": quote, "deleteAt": new(time.Time)}
-	result, err := findOneBy(TableMessage, msg)
+	opts := options.Find().SetSort(bson.D{{"id", -1}})
+	result, err := findManyByOpts(TableMessage, msg, opts)
 	if err != nil {
 		return nil, err
 	}

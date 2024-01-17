@@ -83,7 +83,7 @@ func (mine *MessageService) GetList(ctx context.Context, in *pb.RequestPage, out
 	}
 	out.Total = t
 	out.Pages = p
-	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
+	out.Status = outLog(path, fmt.Sprintf("the now length = %d and total = %d", len(out.List), t))
 	return nil
 }
 
