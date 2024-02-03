@@ -45,7 +45,14 @@ func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd
 func (mine *BehaviourService) HadOne(ctx context.Context, in *pb.ReqBehaviourCheck, out *pb.ReplyBehaviourCheck) error {
 	path := "behaviour.hadOne"
 	inLog(path, in)
-	had, err := cache.Context().HadBehaviour(in.User, in.Target)
+	var had bool
+	var err error
+	if in.Action > 0 {
+		had, err = cache.Context().HadBehaviour2(in.User, in.Target, in.Action)
+	} else {
+		had, err = cache.Context().HadBehaviour(in.User, in.Target)
+	}
+
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil

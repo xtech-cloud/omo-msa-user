@@ -132,10 +132,9 @@ func GetMessagesByUser(user string) ([]*Message, error) {
 	return items, nil
 }
 
-func GetMessagesByQuote(user, quote string) (*Message, error) {
-	msg := bson.M{"user": user, "quote": quote, "deleteAt": new(time.Time)}
-	opts := options.Find().SetSort(bson.D{{"id", -1}})
-	result, err := findManyByOpts(TableMessage, msg, opts)
+func GetMessageByUserQuote(user, quote string) (*Message, error) {
+	msg := bson.M{"user": user, "quote": quote}
+	result, err := findOneBy(TableMessage, msg)
 	if err != nil {
 		return nil, err
 	}

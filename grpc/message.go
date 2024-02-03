@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	pbstatus "github.com/xtech-cloud/omo-msp-status/proto/status"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
@@ -57,24 +58,24 @@ func (mine *MessageService) GetList(ctx context.Context, in *pb.RequestPage, out
 	path := "message.getList"
 	inLog(path, in)
 	var list []*cache.MessageInfo
-	//var err error
+	var err error
 	if in.Key == "user" {
 		list = cache.Context().GetMessagesByUser(in.Value)
 	} else if in.Key == "quote" {
-		msg, _ := cache.Context().GetMessageByQuote(in.Param, in.Value)
+		msg, er := cache.Context().GetMessageByQuote(in.Param, in.Value)
 		if msg != nil {
 			list = make([]*cache.MessageInfo, 0, 1)
 			list = append(list, msg)
 		}
+		err = er
 	} else {
-		out.Status = outError(path, "", pbstatus.ResultStatus_DBException)
-		return nil
+		err = errors.New("the key not defined")
 	}
 
-	//if err != nil {
-	//	out.Status = outError(path, "", pbstatus.ResultStatus_DBException)
-	//	return nil
-	//}
+	if err != nil {
+		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
+		return nil
+	}
 	t, p, arr := cache.CheckPage(in.Page, in.Number, list)
 	out.List = make([]*pb.MessageInfo, 0, len(list))
 	for _, message := range arr {

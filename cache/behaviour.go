@@ -78,6 +78,17 @@ func (mine *cacheContext) HadBehaviour(user, target string) (bool, error) {
 	return false, nil
 }
 
+func (mine *cacheContext) HadBehaviour2(user, target string, act uint32) (bool, error) {
+	db, err := nosql.GetBehaviourByTarget2(user, target, act)
+	if err != nil && !strings.Contains(err.Error(), "no documents in result") {
+		return false, err
+	}
+	if db != nil {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (mine *cacheContext) GetBehaviourCountByUser(user string) int64 {
 	num, _ := nosql.GetBehaviourCountByUser(user)
 	return num

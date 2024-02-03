@@ -126,7 +126,7 @@ func (mine *cacheContext) GetMessageByQuote(user, quote string) (*MessageInfo, e
 	if user == "" || quote == "" {
 		return nil, errors.New("the user or quote is empty")
 	}
-	db, er := nosql.GetMessagesByQuote(user, quote)
+	db, er := nosql.GetMessageByUserQuote(user, quote)
 	if er == nil {
 		info := new(MessageInfo)
 		info.initInfo(db)

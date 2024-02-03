@@ -117,6 +117,20 @@ func GetBehaviourByTarget(user, target string) (*Behaviour, error) {
 	return model, nil
 }
 
+func GetBehaviourByTarget2(user, target string, act uint32) (*Behaviour, error) {
+	msg := bson.M{"user": user, "target": target, "action": act, "deleteAt": new(time.Time)}
+	result, err := findOneBy(TableBehaviour, msg)
+	if err != nil {
+		return nil, err
+	}
+	model := new(Behaviour)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
 func GetBehavioursByTarget(user, target string) ([]*Behaviour, error) {
 	msg := bson.M{"user": user, "target": target, "deleteAt": new(time.Time)}
 	cursor, err1 := findMany(TableBehaviour, msg, 50)
