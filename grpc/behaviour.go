@@ -32,7 +32,7 @@ func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd
 	if msg != nil {
 		err = msg.Read()
 	} else {
-		err = cache.Context().AddBehaviour(in.User, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
+		err = cache.Context().AddBehaviour(in.User, in.Operator, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
 	}
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
@@ -95,13 +95,41 @@ func (mine *BehaviourService) GetList(ctx context.Context, in *pb.ReqBehaviourLi
 	var list []*nosql.Behaviour
 	var err error
 	if len(in.User) > 1 && len(in.Target) > 1 {
-
+		list = make([]*nosql.Behaviour, 0, 1)
+		tmp, _ := cache.Context().GetBehaviourByTarget(in.User, in.Target)
+		if tmp != nil {
+			list = append(list, tmp)
+		}
 	} else if len(in.User) > 1 {
 		list = cache.Context().GetBehaviourHistories(in.User, cache.TargetType(in.Type))
 	} else if len(in.Target) > 1 {
-
+		list, _ = cache.Context().GetBehavioursByTarget(in.Target)
 	} else {
 		out.Status = outError(path, "", pbstatus.ResultStatus_DBException)
+		return nil
+	}
+
+	if err != nil {
+		out.Status = outError(path, "", pbstatus.ResultStatus_DBException)
+		return nil
+	}
+	out.List = make([]*pb.BehaviourInfo, 0, len(list))
+	for _, behaviour := range list {
+		out.List = append(out.List, switchBehaviour(behaviour))
+	}
+	out.Status = outLog(path, fmt.Sprintf("the length = %d", len(out.List)))
+	return nil
+}
+
+func (mine *BehaviourService) GetByFilter(ctx context.Context, in *pb.RequestFilter, out *pb.ReplyBehaviourList) error {
+	path := "behaviour.getList"
+	inLog(path, in)
+	var list []*nosql.Behaviour
+	var err error
+	if in.Key == "latest" || in.Key == "top" {
+		list = cache.Context().GetTopBehavioursBy(in.Values, in.List, in.Number)
+	} else {
+		out.Status = outError(path, "the key not defined", pbstatus.ResultStatus_Empty)
 		return nil
 	}
 

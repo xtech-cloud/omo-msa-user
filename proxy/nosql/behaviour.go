@@ -19,7 +19,7 @@ type Behaviour struct {
 
 	// 目标类型
 	Type   uint8  `json:"type" bson:"type"`
-	User   string `json:"user" bson:"user"`
+	User   string `json:"user" bson:"user"` //用户或者小孩实体
 	Target string `json:"target" bson:"target"`
 	// 动作
 	Action uint8 `json:"action" bson:"action"`
@@ -131,8 +131,8 @@ func GetBehaviourByTarget2(user, target string, act uint32) (*Behaviour, error) 
 	return model, nil
 }
 
-func GetBehavioursByTarget(user, target string) ([]*Behaviour, error) {
-	msg := bson.M{"user": user, "target": target, "deleteAt": new(time.Time)}
+func GetBehavioursByTarget(target string) ([]*Behaviour, error) {
+	msg := bson.M{"target": target, "deleteAt": new(time.Time)}
 	cursor, err1 := findMany(TableBehaviour, msg, 50)
 	if err1 != nil {
 		return nil, err1

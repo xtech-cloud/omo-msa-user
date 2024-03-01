@@ -4,6 +4,7 @@ import (
 	"github.com/micro/go-micro/v2/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"omo.msa.user/proxy/nosql"
+	"sort"
 	"strings"
 	"time"
 )
@@ -24,12 +25,12 @@ type ActionType uint8
 
 type TargetType uint8
 
-func (mine *cacheContext) createBehaviour(user, target string, kind TargetType, act ActionType) error {
+func (mine *cacheContext) createBehaviour(user, operator, target string, kind TargetType, act ActionType) error {
 	db := new(nosql.Behaviour)
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetBehaviourNextID()
 	db.CreatedTime = time.Now()
-	db.Creator = user
+	db.Creator = operator
 	db.UpdatedTime = time.Now()
 	db.User = user
 	db.Target = target
@@ -56,7 +57,7 @@ func (mine *cacheContext) UpdateBehaviour(user, target string, act ActionType) e
 	return err
 }
 
-func (mine *cacheContext) AddBehaviour(user, target string, kind TargetType, act ActionType) error {
+func (mine *cacheContext) AddBehaviour(user, operator, target string, kind TargetType, act ActionType) error {
 	had, err := mine.HadBehaviour(user, target)
 	if err != nil {
 		return err
@@ -64,7 +65,7 @@ func (mine *cacheContext) AddBehaviour(user, target string, kind TargetType, act
 	if had {
 		return nil
 	}
-	return mine.createBehaviour(user, target, kind, act)
+	return mine.createBehaviour(user, operator, target, kind, act)
 }
 
 func (mine *cacheContext) HadBehaviour(user, target string) (bool, error) {
@@ -107,4 +108,41 @@ func (mine *cacheContext) GetBehaviourHistories(user string, kind TargetType) []
 		return nil
 	}
 	return list
+}
+
+func (mine *cacheContext) GetBehaviourByTarget(user, target string) (*nosql.Behaviour, error) {
+	db, err := nosql.GetBehaviourByTarget(user, target)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func (mine *cacheContext) GetBehavioursByTarget(target string) ([]*nosql.Behaviour, error) {
+	dbs, err := nosql.GetBehavioursByTarget(target)
+	if err != nil {
+		return nil, err
+	}
+	return dbs, nil
+}
+
+func (mine *cacheContext) GetTopBehavioursBy(users, targets []string, num uint32) []*nosql.Behaviour {
+	all := make([]*nosql.Behaviour, 0, 500)
+	for _, user := range users {
+		for _, target := range targets {
+			db, _ := nosql.GetBehaviourByTarget(user, target)
+			if db != nil {
+				all = append(all, db)
+			}
+		}
+	}
+	if uint32(len(all)) > num {
+		sort.Slice(all, func(i, j int) bool {
+			return all[i].CreatedTime.Unix() > all[j].CreatedTime.Unix()
+		})
+		_, _, list := CheckPage(1, num, all)
+		return list
+	}
+
+	return all
 }
