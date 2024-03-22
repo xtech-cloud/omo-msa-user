@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -19,8 +20,9 @@ type Behaviour struct {
 
 	// 目标类型
 	Type   uint8  `json:"type" bson:"type"`
-	User   string `json:"user" bson:"user"` //用户或者小孩实体
-	Target string `json:"target" bson:"target"`
+	User   string `json:"user" bson:"user"`     //用户或者小孩实体
+	Target string `json:"target" bson:"target"` //目标对象，可以是实体
+	Scene  string `json:"scene" bson:"scene"`
 	// 动作
 	Action uint8 `json:"action" bson:"action"`
 }
@@ -101,6 +103,26 @@ func GetBehaviourByAct(user, target string, kind uint8) (*Behaviour, error) {
 		return nil, err1
 	}
 	return model, nil
+}
+
+func GetBehavioursByScene(scene string, tp uint32, num int64) ([]*Behaviour, error) {
+	msg := bson.M{"scene": scene, "type": tp}
+	opts := options.Find().SetSort(bson.D{{"createdAt", -1}}).SetLimit(num)
+	cursor, err := findManyByOpts(TableBehaviour, msg, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	var items = make([]*Behaviour, 0, 50)
+	for cursor.Next(context.Background()) {
+		var node = new(Behaviour)
+		if er := cursor.Decode(node); er != nil {
+			return nil, er
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
 }
 
 func GetBehaviourByTarget(user, target string) (*Behaviour, error) {

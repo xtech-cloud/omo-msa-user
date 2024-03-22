@@ -16,7 +16,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tidwall/gjson v1.6.0
 	github.com/xtech-cloud/omo-msp-status v1.0.2
-	github.com/xtech-cloud/omo-msp-user v1.4.4
+	github.com/xtech-cloud/omo-msp-user v1.4.6
 	go.mongodb.org/mongo-driver v1.4.6
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

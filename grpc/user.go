@@ -379,7 +379,7 @@ func (mine *UserService) UpdatePhone(ctx context.Context, in *pb.ReqUserPhone, o
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil
 	}
-	account := cache.Context().GetAccountByUser(in.Uid)
+	account := cache.Context().GetAccount(info.Account)
 	if account != nil && account.Name == old {
 		_ = account.UpdateName(in.Phone, in.Operator)
 	}

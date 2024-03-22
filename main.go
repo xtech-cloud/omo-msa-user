@@ -45,6 +45,7 @@ func main() {
 	_ = proto.RegisterWechatServiceHandler(service.Server(), new(grpc.WechatService))
 	_ = proto.RegisterBehaviourServiceHandler(service.Server(), new(grpc.BehaviourService))
 	_ = proto.RegisterMessageServiceHandler(service.Server(), new(grpc.MessageService))
+	_ = proto.RegisterScoreServiceHandler(service.Server(), new(grpc.ScoreService))
 
 	app, _ := filepath.Abs(os.Args[0])
 

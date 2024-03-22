@@ -7,6 +7,7 @@ import (
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"omo.msa.user/cache"
 	"omo.msa.user/proxy/nosql"
+	"strconv"
 )
 
 type BehaviourService struct{}
@@ -32,7 +33,7 @@ func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd
 	if msg != nil {
 		err = msg.Read()
 	} else {
-		err = cache.Context().AddBehaviour(in.User, in.Operator, in.Target, cache.TargetType(in.Type), cache.ActionType(in.Action))
+		err = cache.Context().AddBehaviour(in.User, in.Target, in.Scene, in.Operator, cache.TargetType(in.Type), cache.ActionType(in.Action))
 	}
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
@@ -128,6 +129,9 @@ func (mine *BehaviourService) GetByFilter(ctx context.Context, in *pb.RequestFil
 	var err error
 	if in.Key == "latest" || in.Key == "top" {
 		list = cache.Context().GetTopBehavioursBy(in.Values, in.List, in.Number)
+	} else if in.Key == "dynamic" {
+		tp, _ := strconv.ParseInt(in.Value, 10, 32)
+		list = cache.Context().GetBehavioursLatestByScene(in.Owner, uint32(tp), in.Number)
 	} else {
 		out.Status = outError(path, "the key not defined", pbstatus.ResultStatus_Empty)
 		return nil

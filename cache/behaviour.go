@@ -25,7 +25,7 @@ type ActionType uint8
 
 type TargetType uint8
 
-func (mine *cacheContext) createBehaviour(user, operator, target string, kind TargetType, act ActionType) error {
+func (mine *cacheContext) createBehaviour(user, target, scene, operator string, kind TargetType, act ActionType) error {
 	db := new(nosql.Behaviour)
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetBehaviourNextID()
@@ -36,6 +36,7 @@ func (mine *cacheContext) createBehaviour(user, operator, target string, kind Ta
 	db.Target = target
 	db.Type = uint8(kind)
 	db.Action = uint8(act)
+	db.Scene = scene
 
 	err := nosql.CreateBehaviour(db)
 	if err != nil {
@@ -57,7 +58,7 @@ func (mine *cacheContext) UpdateBehaviour(user, target string, act ActionType) e
 	return err
 }
 
-func (mine *cacheContext) AddBehaviour(user, operator, target string, kind TargetType, act ActionType) error {
+func (mine *cacheContext) AddBehaviour(user, target, scene, operator string, kind TargetType, act ActionType) error {
 	had, err := mine.HadBehaviour(user, target)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (mine *cacheContext) AddBehaviour(user, operator, target string, kind Targe
 	if had {
 		return nil
 	}
-	return mine.createBehaviour(user, operator, target, kind, act)
+	return mine.createBehaviour(user, target, scene, operator, kind, act)
 }
 
 func (mine *cacheContext) HadBehaviour(user, target string) (bool, error) {
@@ -103,6 +104,15 @@ func (mine *cacheContext) GetBehaviourCount(target string, act ActionType) int64
 // 获取用户浏览历史数据
 func (mine *cacheContext) GetBehaviourHistories(user string, kind TargetType) []*nosql.Behaviour {
 	list, err := nosql.GetBehaviourByType(user, uint8(kind), 20)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil
+	}
+	return list
+}
+
+func (mine *cacheContext) GetBehavioursLatestByScene(scene string, tp, num uint32) []*nosql.Behaviour {
+	list, err := nosql.GetBehavioursByScene(scene, tp, int64(num))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil
