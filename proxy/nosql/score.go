@@ -85,6 +85,28 @@ func GetScoreBySceneEntity(scene, entity string) (*Score, error) {
 	return model, nil
 }
 
+func GetScoresByEntity(entity string) ([]*Score, error) {
+	if len(entity) < 2 {
+		return nil, errors.New("db score scene or entity is empty of GetScoreBySceneEntity")
+	}
+
+	filter := bson.M{"entity": entity}
+	cursor, err1 := findMany(TableScores, filter, 0)
+	if err1 != nil {
+		return nil, err1
+	}
+	var items = make([]*Score, 0, 20)
+	for cursor.Next(context.Background()) {
+		var node = new(Score)
+		if err := cursor.Decode(&node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
 func GetScoreBySceneDate(scene string, date int64) (*Score, error) {
 	if len(scene) < 2 || date < 2 {
 		return nil, errors.New("db score scene or stamp is empty of GetScoreBySceneDate")

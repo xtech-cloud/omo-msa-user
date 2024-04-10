@@ -35,6 +35,10 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Status:   uint32(info.Status),
 		Tags:     info.Tags,
 	}
+	tmp.Sns = make([]*pb.SNSInfo, 0, len(info.SNS))
+	for _, sn := range info.SNS {
+		tmp.Sns = append(tmp.Sns, &pb.SNSInfo{Uid: sn.UID, Type: uint32(sn.Type), Name: sn.Name})
+	}
 	return tmp
 }
 

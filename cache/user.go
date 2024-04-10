@@ -301,7 +301,11 @@ func (mine *UserInfo) SubtractSNS(uid string) error {
 	if err == nil {
 		for i := 0; i < len(mine.SNS); i += 1 {
 			if mine.SNS[i].UID == uid {
-				mine.SNS = append(mine.SNS[:i], mine.SNS[i+1:]...)
+				if i == len(mine.SNS)-1 {
+					mine.SNS = append(mine.SNS[:i])
+				} else {
+					mine.SNS = append(mine.SNS[:i], mine.SNS[i+1:]...)
+				}
 				break
 			}
 		}

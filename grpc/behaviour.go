@@ -14,6 +14,8 @@ type BehaviourService struct{}
 
 func switchBehaviour(info *nosql.Behaviour) *pb.BehaviourInfo {
 	tmp := &pb.BehaviourInfo{
+		Uid:     info.UID.Hex(),
+		Scene:   info.Scene,
 		User:    info.User,
 		Target:  info.Target,
 		Type:    uint32(info.Type),

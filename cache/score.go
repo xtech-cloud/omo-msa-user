@@ -85,6 +85,20 @@ func (mine *cacheContext) GetScoreInfo(scene, entity string) (*ScoreInfo, error)
 	return info, nil
 }
 
+func (mine *cacheContext) GetScores(entity string) ([]*ScoreInfo, error) {
+	dbs, err := nosql.GetScoresByEntity(entity)
+	if err != nil {
+		return nil, err
+	}
+	list := make([]*ScoreInfo, 0, len(dbs))
+	for _, db := range dbs {
+		info := new(ScoreInfo)
+		info.initInfo(db)
+		list = append(list, info)
+	}
+	return list, nil
+}
+
 func (mine *cacheContext) GetScoreInfoByDate(scene string, date int64) *ScoreInfo {
 	db, err := nosql.GetScoreBySceneDate(scene, date)
 	if err != nil {
@@ -137,16 +151,21 @@ func (mine *cacheContext) GetScoresByHalfYear(scene string) []*ScoreInfo {
 func (mine *cacheContext) GetScoresByWeek(scene string) []*ScoreInfo {
 	now := time.Now()
 	list := make([]*ScoreInfo, 0, 7)
-	begin := now.AddDate(0, 0, -7)
+	weekDay := int(now.Weekday())
 	for i := 0; i < 7; i += 1 {
-		day := time.Date(now.Year(), now.Month(), begin.Day(), 0, 0, 0, 0, time.UTC)
-		stamp := day.Unix()
-		db, _ := nosql.GetScoreBySceneDate(scene, stamp)
-		var num uint64 = 0
-		if db != nil {
-			num = db.Count
+		if i <= weekDay {
+			begin := now.AddDate(0, 0, -(weekDay - i))
+			day := time.Date(begin.Year(), begin.Month(), begin.Day(), 0, 0, 0, 0, time.UTC)
+			stamp := day.Unix()
+			db, _ := nosql.GetScoreBySceneDate(scene, stamp)
+			var num uint64 = 0
+			if db != nil {
+				num = db.Count
+			}
+			list = append(list, &ScoreInfo{Scene: scene, Type: uint32(i), Total: num})
+		} else {
+			list = append(list, &ScoreInfo{Scene: scene, Type: uint32(i), Total: 0})
 		}
-		list = append(list, &ScoreInfo{Scene: scene, Type: uint32(day.Weekday()), Total: num})
 	}
 	return list
 }

@@ -94,7 +94,12 @@ func (mine *ScoreService) RemoveOne(ctx context.Context, in *pb.RequestInfo, out
 func (mine *ScoreService) GetStatistic(ctx context.Context, in *pb.RequestFilter, out *pb.ReplyStatistic) error {
 	path := "score.getStatistic"
 	inLog(path, in)
-
+	if in.Key == "entity" {
+		arr, _ := cache.Context().GetScores(in.Value)
+		for _, info := range arr {
+			out.Count += info.Total
+		}
+	}
 	out.Status = outLog(path, out)
 	return nil
 }
