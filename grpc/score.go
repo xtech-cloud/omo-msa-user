@@ -99,6 +99,9 @@ func (mine *ScoreService) GetStatistic(ctx context.Context, in *pb.RequestFilter
 		for _, info := range arr {
 			out.Count += info.Total
 		}
+	} else if in.Key == "score" {
+		tp, _ := strconv.ParseInt(in.Value, 10, 32)
+		out.Count = uint64(cache.Context().GetScoreCountByType(in.Uid, uint32(tp)))
 	}
 	out.Status = outLog(path, out)
 	return nil

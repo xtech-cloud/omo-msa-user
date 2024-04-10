@@ -99,6 +99,22 @@ func (mine *cacheContext) GetScores(entity string) ([]*ScoreInfo, error) {
 	return list, nil
 }
 
+func (mine *cacheContext) GetScoreCountByType(entity string, tp uint32) uint32 {
+	dbs, err := nosql.GetScoresByEntity(entity)
+	if err != nil {
+		return 0
+	}
+	var num uint32 = 0
+	for _, db := range dbs {
+		for _, pair := range db.List {
+			if pair.Type == tp {
+				num += pair.Count
+			}
+		}
+	}
+	return num
+}
+
 func (mine *cacheContext) GetScoreInfoByDate(scene string, date int64) *ScoreInfo {
 	db, err := nosql.GetScoreBySceneDate(scene, date)
 	if err != nil {
