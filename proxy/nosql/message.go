@@ -114,7 +114,7 @@ func GetMessageByTarget(target string) ([]*Message, error) {
 
 func GetMessagesByUser(user string) ([]*Message, error) {
 	msg := bson.M{"user": user, "deleteAt": new(time.Time)}
-	opts := options.Find().SetSort(bson.D{{"id", -1}})
+	opts := options.Find().SetSort(bson.M{"id": -1})
 	cursor, err1 := findManyByOpts(TableMessage, msg, opts)
 	if err1 != nil {
 		return nil, err1

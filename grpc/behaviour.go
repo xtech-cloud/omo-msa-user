@@ -34,9 +34,12 @@ func (mine *BehaviourService) AddOne(ctx context.Context, in *pb.ReqBehaviourAdd
 	msg, _ := cache.Context().GetMessageByQuote(in.User, in.Target)
 	if msg != nil {
 		err = msg.Read()
-	} else {
-		err = cache.Context().AddBehaviour(in.User, in.Target, in.Scene, in.Operator, cache.TargetType(in.Type), cache.ActionType(in.Action))
+		if err != nil {
+			out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
+			return nil
+		}
 	}
+	err = cache.Context().AddBehaviour(in.User, in.Target, in.Scene, in.Operator, cache.TargetType(in.Type), cache.ActionType(in.Action))
 	if err != nil {
 		out.Status = outError(path, err.Error(), pbstatus.ResultStatus_DBException)
 		return nil

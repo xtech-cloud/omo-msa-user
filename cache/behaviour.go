@@ -25,7 +25,7 @@ type ActionType uint8
 
 type TargetType uint8
 
-func (mine *cacheContext) createBehaviour(user, target, scene, operator string, kind TargetType, act ActionType) error {
+func (mine *cacheContext) CreateBehaviour(user, target, scene, operator string, kind TargetType, act ActionType) error {
 	db := new(nosql.Behaviour)
 	db.UID = primitive.NewObjectID()
 	db.ID = nosql.GetBehaviourNextID()
@@ -59,18 +59,29 @@ func (mine *cacheContext) UpdateBehaviour(user, target string, act ActionType) e
 }
 
 func (mine *cacheContext) AddBehaviour(user, target, scene, operator string, kind TargetType, act ActionType) error {
-	had, err := mine.HadBehaviour(user, target)
+	had, err := mine.HadBehaviour3(user, target, scene, uint32(act))
 	if err != nil {
 		return err
 	}
 	if had {
 		return nil
 	}
-	return mine.createBehaviour(user, target, scene, operator, kind, act)
+	return mine.CreateBehaviour(user, target, scene, operator, kind, act)
 }
 
 func (mine *cacheContext) HadBehaviour(user, target string) (bool, error) {
 	db, err := nosql.GetBehaviourByTarget(user, target)
+	if err != nil && !strings.Contains(err.Error(), "no documents in result") {
+		return false, err
+	}
+	if db != nil {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (mine *cacheContext) HadBehaviour3(user, target, scene string, act uint32) (bool, error) {
+	db, err := nosql.GetBehaviourByTarget3(user, target, scene, act)
 	if err != nil && !strings.Contains(err.Error(), "no documents in result") {
 		return false, err
 	}

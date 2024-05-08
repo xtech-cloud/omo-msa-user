@@ -148,7 +148,7 @@ func GetScoreBySceneDur(scene string, from, to int64) ([]*Score, error) {
 func GetScoresByTop(num int64, tp uint8) ([]*Score, error) {
 	var items = make([]*Score, 0, 20)
 	filter := bson.M{"type": tp}
-	opts := options.Find().SetSort(bson.D{{"count", -1}}).SetLimit(num)
+	opts := options.Find().SetSort(bson.M{"count": -1}).SetLimit(num)
 	cursor, err1 := findManyByOpts(TableScores, filter, opts)
 	if err1 != nil {
 		return nil, err1
@@ -167,7 +167,7 @@ func GetScoresByTop(num int64, tp uint8) ([]*Score, error) {
 func GetScoresBySceneTop(scene string, num int64, tp uint8) ([]*Score, error) {
 	var items = make([]*Score, 0, 20)
 	filter := bson.M{"scene": scene, "type": tp}
-	opts := options.Find().SetSort(bson.D{{"count", -1}}).SetLimit(num)
+	opts := options.Find().SetSort(bson.M{"count": -1}).SetLimit(num)
 	cursor, err1 := findManyByOpts(TableScores, filter, opts)
 	if err1 != nil {
 		return nil, err1

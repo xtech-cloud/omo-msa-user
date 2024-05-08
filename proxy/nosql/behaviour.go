@@ -107,7 +107,7 @@ func GetBehaviourByAct(user, target string, kind uint8) (*Behaviour, error) {
 
 func GetBehavioursByScene(scene string, tp uint32, num int64) ([]*Behaviour, error) {
 	msg := bson.M{"scene": scene, "type": tp}
-	opts := options.Find().SetSort(bson.D{{"createdAt", -1}}).SetLimit(num)
+	opts := options.Find().SetSort(bson.M{"createdAt": -1}).SetLimit(num)
 	cursor, err := findManyByOpts(TableBehaviour, msg, opts)
 	if err != nil {
 		return nil, err
@@ -141,6 +141,20 @@ func GetBehaviourByTarget(user, target string) (*Behaviour, error) {
 
 func GetBehaviourByTarget2(user, target string, act uint32) (*Behaviour, error) {
 	msg := bson.M{"user": user, "target": target, "action": act, "deleteAt": new(time.Time)}
+	result, err := findOneBy(TableBehaviour, msg)
+	if err != nil {
+		return nil, err
+	}
+	model := new(Behaviour)
+	err1 := result.Decode(model)
+	if err1 != nil {
+		return nil, err1
+	}
+	return model, nil
+}
+
+func GetBehaviourByTarget3(user, target, scene string, act uint32) (*Behaviour, error) {
+	msg := bson.M{"user": user, "target": target, "scene": scene, "action": act, "deleteAt": new(time.Time)}
 	result, err := findOneBy(TableBehaviour, msg)
 	if err != nil {
 		return nil, err
