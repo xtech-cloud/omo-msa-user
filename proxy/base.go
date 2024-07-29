@@ -11,3 +11,8 @@ type ScorePair struct {
 	Type  uint32 `json:"type" bson:"type"`
 	Count uint32 `json:"count" bson:"count"`
 }
+
+type ShownInfo struct {
+	Name  string `json:"name" bson:"name"`
+	Cover string `json:"cover" bson:"cover"`
+}

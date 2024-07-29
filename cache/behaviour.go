@@ -10,15 +10,27 @@ import (
 )
 
 const (
-	ActionUnknown ActionType = 0
-	ActionVisit   ActionType = 1
-	ActionCare    ActionType = 2
+	BehaviourActionRead    = 1
+	BehaviourActionStar    = 2
+	BehaviourActionJoin    = 3
+	BehaviourActionPublish = 4
+	BehaviourActionBind    = 5
+	BehaviourActionRelate  = 6
 )
 
 const (
-	TargetTypeAlbum      TargetType = 1
-	TargetTypeCollective TargetType = 2
-	TargetTypeActivity   TargetType = 3
+	TargetTypeCommon     = 0
+	TargetTypeAlbum      = 1
+	TargetTypeCollective = 2
+	TargetTypeActivity   = 3
+	TargetTypeArticle    = 4
+	TargetTypeNotice     = 5
+	TargetTypeCert       = 6
+	TargetTypeReading    = 7
+	TargetTypeRecitation = 8
+	TargetTypePlace      = 9
+	TargetTypePhone      = 10
+	TargetTypeScene      = 11
 )
 
 type ActionType uint8

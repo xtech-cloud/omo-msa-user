@@ -6,6 +6,7 @@ import (
 	"github.com/micro/go-micro/v2/logger"
 	pb "github.com/xtech-cloud/omo-msp-user/proto/user"
 	"golang.org/x/crypto/bcrypt"
+	"math"
 	"omo.msa.user/config"
 	"omo.msa.user/proxy/nosql"
 	"time"
@@ -146,6 +147,67 @@ func (mine *cacheContext) AllUsers() []*UserInfo {
 				info.initInfo(db, acc.Status)
 				list = append(list, info)
 			}
+		}
+	}
+	return list
+}
+
+func (mine *cacheContext) GetUsersByPage(page, number uint32) (uint32, uint32, []*UserInfo) {
+	if page < 1 {
+		page = 1
+	}
+	if number < 1 {
+		number = 10
+	}
+	start := (page - 1) * number
+	array, err := nosql.GetUsersByPage(int64(start), int64(number))
+	total := nosql.GetUserCount()
+	pages := math.Ceil(float64(total) / float64(number))
+	if err == nil {
+		list := make([]*UserInfo, 0, len(array))
+		for _, item := range array {
+			info := new(UserInfo)
+			info.initInfo(item, 0)
+			list = append(list, info)
+		}
+		return uint32(total), uint32(pages), list
+	}
+	return 0, 0, make([]*UserInfo, 0, 1)
+}
+
+func (mine *cacheContext) GetUsersByPageScene(scene string, page, number uint32) (uint32, uint32, []*UserInfo) {
+	if page < 1 {
+		page = 1
+	}
+	if number < 1 {
+		number = 10
+	}
+	start := (page - 1) * number
+	array, err := nosql.GetUsersByScenePage(scene, int64(start), int64(number))
+	total := nosql.GetUsersCountByScene(scene)
+	pages := math.Ceil(float64(total) / float64(number))
+	if err == nil {
+		list := make([]*UserInfo, 0, len(array))
+		for _, item := range array {
+			info := new(UserInfo)
+			info.initInfo(item, 0)
+			list = append(list, info)
+		}
+		return uint32(total), uint32(pages), list
+	}
+	return 0, 0, make([]*UserInfo, 0, 1)
+}
+
+func (mine *cacheContext) GetUsersByLatest(scene string, page, number uint32) []*UserInfo {
+	arr, err := nosql.GetBehavioursByPage(scene, TargetTypeScene, BehaviourActionRelate, int64(page), int64(number))
+	if err != nil {
+		return nil
+	}
+	list := make([]*UserInfo, 0, len(arr))
+	for _, db := range arr {
+		user := mine.GetUser(db.User)
+		if user != nil {
+			list = append(list, user)
 		}
 	}
 	return list

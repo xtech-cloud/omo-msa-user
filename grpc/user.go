@@ -35,6 +35,11 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Status:   uint32(info.Status),
 		Tags:     info.Tags,
 	}
+	if len(info.Shown.Name) > 0 {
+		tmp.Shown = &pb.ShownInfo{Name: info.Shown.Name, Cover: info.Shown.Cover}
+	} else {
+		tmp.Shown = &pb.ShownInfo{Name: info.Name, Cover: info.Portrait}
+	}
 	tmp.Sns = make([]*pb.SNSInfo, 0, len(info.SNS))
 	for _, sn := range info.SNS {
 		tmp.Sns = append(tmp.Sns, &pb.SNSInfo{Uid: sn.UID, Type: uint32(sn.Type), Name: sn.Name})
@@ -161,17 +166,21 @@ func (mine *UserService) GetByPage(ctx context.Context, in *pb.RequestPage, out 
 	path := "user.getByPage"
 	inLog(path, in)
 	out.List = make([]*pb.UserInfo, 0, in.Number)
-	users := cache.Context().AllUsers()
-	total := uint32(len(users))
-	out.PageMax = total/in.Number + 1
-	var i uint32 = 0
-	for ; i < total; i += 1 {
-		t := i/in.Number + 1
-		if t == in.Page {
-			out.List = append(out.List, switchUser(users[i]))
-		}
+	var list []*cache.UserInfo
+	var total uint32
+	var pages uint32
+	if in.Key == "" {
+		total, pages, list = cache.Context().GetUsersByPage(in.Page, in.Number)
+	} else if in.Key == "scene" {
+		total, pages, list = cache.Context().GetUsersByPageScene(in.Value, in.Page, in.Number)
+	} else if in.Key == "latest" {
+		list = cache.Context().GetUsersByLatest(in.Value, in.Page, in.Number)
+	}
+	for _, info := range list {
+		out.List = append(out.List, switchUser(info))
 	}
 	out.PageNow = in.Page
+	out.PageMax = pages
 	out.Total = uint64(total)
 	out.Status = outLog(path, fmt.Sprintf("the total = %d and length = %d", total, len(out.List)))
 	return nil
@@ -427,6 +436,10 @@ func (mine *UserService) UpdateByFilter(ctx context.Context, in *pb.ReqUpdateFil
 	var err error
 	if in.Key == "relates" {
 		err = info.UpdateRelates(in.Values)
+	} else if in.Key == "shown" {
+		if len(in.Values) == 2 {
+			err = info.UpdateShown(in.Values[0], in.Values[1])
+		}
 	} else {
 		err = errors.New("the key not defined")
 	}

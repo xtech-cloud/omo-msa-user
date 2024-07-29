@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"omo.msa.user/proxy"
 	"time"
 )
@@ -27,6 +28,7 @@ type User struct {
 	Sex      uint8           `json:"sex" bson:"sex"`
 	Entity   string          `json:"entity" bson:"entity"`
 	Portrait string          `json:"portrait" bson:"portrait"`
+	Shown    proxy.ShownInfo `json:"shown" bson:"shown"`
 	Tags     []string        `json:"tags" bson:"tags"`
 	Follows  []string        `json:"follows" bson:"follows"`
 	Relates  []string        `json:"relates" bson:"relates"`
@@ -173,6 +175,66 @@ func GetUserBySNS(uid string) (*User, error) {
 	return model, nil
 }
 
+func GetUsersByScenePage(scene string, start, num int64) ([]*User, error) {
+	def := new(time.Time)
+	filter := bson.M{"relates": scene, "deleteAt": def}
+	opts := options.Find().SetSort(bson.D{{"createdAt", -1}}).SetLimit(num).SetSkip(start)
+	cursor, err1 := findManyByOpts(TableUser, filter, opts)
+	if err1 != nil {
+		return nil, err1
+	}
+	var items = make([]*User, 0, 20)
+	for cursor.Next(context.TODO()) {
+		var node = new(User)
+		if err := cursor.Decode(&node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
+func GetUsersByPage(start, num int64) ([]*User, error) {
+	def := new(time.Time)
+	filter := bson.M{"deleteAt": def}
+	opts := options.Find().SetSort(bson.D{{"createdAt", -1}}).SetLimit(num).SetSkip(start)
+	cursor, err1 := findManyByOpts(TableUser, filter, opts)
+	if err1 != nil {
+		return nil, err1
+	}
+	var items = make([]*User, 0, 20)
+	for cursor.Next(context.TODO()) {
+		var node = new(User)
+		if err := cursor.Decode(&node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
+func GetUsersCount() int64 {
+	num, err1 := getCount(TableUser)
+	if err1 != nil {
+		return num
+	}
+
+	return num
+}
+
+func GetUsersCountByScene(scene string) int64 {
+	def := new(time.Time)
+	filter := bson.M{"relates": scene, "deleteAt": def}
+	num, err1 := getCountByFilter(TableUser, filter)
+	if err1 != nil {
+		return num
+	}
+
+	return num
+}
+
 func UpdateUserBase(uid, name, nick, remark, portrait, operator string, sex uint8) error {
 	msg := bson.M{"name": name, "nick": nick, "remark": remark, "portrait": portrait, "sex": sex, "operator": operator, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
@@ -211,6 +273,12 @@ func UpdateUserFollows(uid string, list []string) error {
 
 func UpdateUserRelates(uid string, list []string) error {
 	msg := bson.M{"relates": list, "operator": uid, "updatedAt": time.Now()}
+	_, err := updateOne(TableUser, uid, msg)
+	return err
+}
+
+func UpdateUserShown(uid string, shown proxy.ShownInfo) error {
+	msg := bson.M{"shown": shown, "operator": uid, "updatedAt": time.Now()}
 	_, err := updateOne(TableUser, uid, msg)
 	return err
 }

@@ -167,6 +167,25 @@ func GetBehaviourByTarget3(user, target, scene string, act uint32) (*Behaviour, 
 	return model, nil
 }
 
+func GetBehavioursByPage(target string, tp, act uint32, start, num int64) ([]*Behaviour, error) {
+	msg := bson.M{"target": target, "action": act, "type": tp, "deleteAt": new(time.Time)}
+	opts := options.Find().SetSort(bson.D{{"createdAt", -1}}).SetLimit(num).SetSkip(start)
+	cursor, err1 := findManyByOpts(TableBehaviour, msg, opts)
+	if err1 != nil {
+		return nil, err1
+	}
+	var items = make([]*Behaviour, 0, 20)
+	for cursor.Next(context.TODO()) {
+		var node = new(Behaviour)
+		if err := cursor.Decode(&node); err != nil {
+			return nil, err
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
 func GetBehavioursByTarget(target string) ([]*Behaviour, error) {
 	msg := bson.M{"target": target, "deleteAt": new(time.Time)}
 	cursor, err1 := findMany(TableBehaviour, msg, 50)

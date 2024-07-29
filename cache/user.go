@@ -18,6 +18,7 @@ type UserInfo struct {
 	Status   uint8
 	Entity   string
 	Portrait string
+	Shown    proxy.ShownInfo
 	Tags     []string
 	Follows  []string
 	Relates  []string
@@ -127,6 +128,7 @@ func (mine *UserInfo) initInfo(db *nosql.User, st uint8) {
 	mine.Entity = db.Entity
 	mine.Portrait = db.Portrait
 	mine.Tags = db.Tags
+	mine.Shown = db.Shown
 	if mine.Tags == nil {
 		mine.Tags = make([]string, 0, 5)
 	}
@@ -184,6 +186,15 @@ func (mine *UserInfo) UpdateRelates(list []string) error {
 	err := nosql.UpdateUserRelates(mine.UID, list)
 	if err == nil {
 		mine.Relates = list
+		mine.UpdateTime = time.Now()
+	}
+	return err
+}
+
+func (mine *UserInfo) UpdateShown(name, cover string) error {
+	err := nosql.UpdateUserShown(mine.UID, proxy.ShownInfo{Name: name, Cover: cover})
+	if err == nil {
+		mine.Shown = proxy.ShownInfo{Name: name, Cover: cover}
 		mine.UpdateTime = time.Now()
 	}
 	return err
