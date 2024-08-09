@@ -192,6 +192,12 @@ func (mine *UserInfo) UpdateRelates(list []string) error {
 }
 
 func (mine *UserInfo) UpdateShown(name, cover string) error {
+	if name == "" {
+		name = mine.NickName
+	}
+	if cover == "" {
+		cover = mine.Portrait
+	}
 	err := nosql.UpdateUserShown(mine.UID, proxy.ShownInfo{Name: name, Cover: cover})
 	if err == nil {
 		mine.Shown = proxy.ShownInfo{Name: name, Cover: cover}
