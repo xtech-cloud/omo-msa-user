@@ -76,6 +76,21 @@ func Context() *cacheContext {
 	return cacheCtx
 }
 
+func getPageStart(page, num uint32) (int64, int64) {
+	var start uint32
+	if page < 1 {
+		page = 0
+		num = 0
+		start = 0
+	} else {
+		if num < 1 {
+			num = 10
+		}
+		start = (page - 1) * num
+	}
+	return int64(start), int64(num)
+}
+
 func CheckPage[T any](page, number uint32, all []T) (uint32, uint32, []T) {
 	if len(all) < 1 {
 		return 0, 0, make([]T, 0, 1)
@@ -152,15 +167,9 @@ func (mine *cacheContext) AllUsers() []*UserInfo {
 	return list
 }
 
-func (mine *cacheContext) GetUsersByPage(page, number uint32) (uint32, uint32, []*UserInfo) {
-	if page < 1 {
-		page = 1
-	}
-	if number < 1 {
-		number = 10
-	}
-	start := (page - 1) * number
-	array, err := nosql.GetUsersByPage(int64(start), int64(number))
+func (mine *cacheContext) GetUsersByPage(page, num uint32) (uint32, uint32, []*UserInfo) {
+	start, number := getPageStart(page, num)
+	array, err := nosql.GetUsersByPage(start, number)
 	total := nosql.GetUserCount()
 	pages := math.Ceil(float64(total) / float64(number))
 	if err == nil {
@@ -175,15 +184,9 @@ func (mine *cacheContext) GetUsersByPage(page, number uint32) (uint32, uint32, [
 	return 0, 0, make([]*UserInfo, 0, 1)
 }
 
-func (mine *cacheContext) GetUsersByPageScene(scene string, page, number uint32) (uint32, uint32, []*UserInfo) {
-	if page < 1 {
-		page = 1
-	}
-	if number < 1 {
-		number = 10
-	}
-	start := (page - 1) * number
-	array, err := nosql.GetUsersByScenePage(scene, int64(start), int64(number))
+func (mine *cacheContext) GetUsersByPageScene(scene string, page, num uint32) (uint32, uint32, []*UserInfo) {
+	start, number := getPageStart(page, num)
+	array, err := nosql.GetUsersByScenePage(scene, start, number)
 	total := nosql.GetUsersCountByScene(scene)
 	pages := math.Ceil(float64(total) / float64(number))
 	if err == nil {
@@ -198,19 +201,22 @@ func (mine *cacheContext) GetUsersByPageScene(scene string, page, number uint32)
 	return 0, 0, make([]*UserInfo, 0, 1)
 }
 
-func (mine *cacheContext) GetUsersByLatest(scene string, page, number uint32) []*UserInfo {
-	arr, err := nosql.GetBehavioursByPage(scene, TargetTypeScene, BehaviourActionRelate, int64(page), int64(number))
+func (mine *cacheContext) GetUsersByLatest(scene string, page, num uint32) (uint32, uint32, []*UserInfo) {
+	start, number := getPageStart(page, num)
+	total := nosql.GetBehavioursCountBy(scene, TargetTypeScene, BehaviourActionRelate)
+	pages := math.Ceil(float64(total) / float64(number))
+	arr, err := nosql.GetBehavioursByPage(scene, TargetTypeScene, BehaviourActionRelate, start, number)
 	if err != nil {
-		return nil
+		return 0, 0, nil
 	}
 	list := make([]*UserInfo, 0, len(arr))
 	for _, db := range arr {
-		user := mine.GetUser(db.User)
+		user := mine.GetUser(db.Creator)
 		if user != nil {
 			list = append(list, user)
 		}
 	}
-	return list
+	return uint32(total), uint32(pages), list
 }
 
 func (mine *cacheContext) SearchUsers(kind pb.UserType, tags []string) []*UserInfo {

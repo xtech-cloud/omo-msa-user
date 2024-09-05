@@ -35,11 +35,13 @@ func switchUser(info *cache.UserInfo) *pb.UserInfo {
 		Status:   uint32(info.Status),
 		Tags:     info.Tags,
 	}
-	if len(info.Shown.Name) > 0 {
-		tmp.Shown = &pb.ShownInfo{Name: info.Shown.Name, Cover: info.Shown.Cover}
-	} else {
-		tmp.Shown = &pb.ShownInfo{Name: info.Name, Cover: info.Portrait}
-	}
+	tmp.Shown = &pb.ShownInfo{Name: info.Shown.Name, Cover: info.Shown.Cover}
+	//if info.Shown != nil {
+	//	tmp.Shown = &pb.ShownInfo{Name: info.Shown.Name, Cover: info.Shown.Cover}
+	//} else {
+	//	//tmp.Shown = &pb.ShownInfo{Name: info.NickName, Cover: info.Portrait}
+	//	tmp.Shown = &pb.ShownInfo{Name: "", Cover: ""}
+	//}
 	tmp.Sns = make([]*pb.SNSInfo, 0, len(info.SNS))
 	for _, sn := range info.SNS {
 		tmp.Sns = append(tmp.Sns, &pb.SNSInfo{Uid: sn.UID, Type: uint32(sn.Type), Name: sn.Name})
@@ -174,7 +176,7 @@ func (mine *UserService) GetByPage(ctx context.Context, in *pb.RequestPage, out 
 	} else if in.Key == "scene" {
 		total, pages, list = cache.Context().GetUsersByPageScene(in.Value, in.Page, in.Number)
 	} else if in.Key == "latest" {
-		list = cache.Context().GetUsersByLatest(in.Value, in.Page, in.Number)
+		total, pages, list = cache.Context().GetUsersByLatest(in.Value, in.Page, in.Number)
 	}
 	for _, info := range list {
 		out.List = append(out.List, switchUser(info))
@@ -182,7 +184,7 @@ func (mine *UserService) GetByPage(ctx context.Context, in *pb.RequestPage, out 
 	out.PageNow = in.Page
 	out.PageMax = pages
 	out.Total = uint64(total)
-	out.Status = outLog(path, fmt.Sprintf("the total = %d and length = %d", total, len(out.List)))
+	out.Status = outLog(path, fmt.Sprintf("the total = %d, pages = %d and length = %d", total, pages, len(out.List)))
 	return nil
 }
 
