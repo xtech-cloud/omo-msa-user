@@ -125,6 +125,26 @@ func GetBehavioursByScene(scene string, tp uint32, num int64) ([]*Behaviour, err
 	return items, nil
 }
 
+func GetBehavioursBySceneAct(scene string, act uint32, num int64) ([]*Behaviour, error) {
+	msg := bson.M{"scene": scene, "action": act}
+	opts := options.Find().SetSort(bson.M{"createdAt": -1}).SetLimit(num)
+	cursor, err := findManyByOpts(TableBehaviour, msg, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	var items = make([]*Behaviour, 0, 50)
+	for cursor.Next(context.Background()) {
+		var node = new(Behaviour)
+		if er := cursor.Decode(node); er != nil {
+			return nil, er
+		} else {
+			items = append(items, node)
+		}
+	}
+	return items, nil
+}
+
 func GetBehaviourByTarget(user, target string) (*Behaviour, error) {
 	msg := bson.M{"user": user, "target": target, "deleteAt": new(time.Time)}
 	result, err := findOneBy(TableBehaviour, msg)

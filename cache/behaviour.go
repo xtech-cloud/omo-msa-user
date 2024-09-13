@@ -16,6 +16,7 @@ const (
 	BehaviourActionPublish = 4
 	BehaviourActionBind    = 5
 	BehaviourActionRelate  = 6
+	BehaviourActionGain    = 7
 )
 
 const (
@@ -136,6 +137,15 @@ func (mine *cacheContext) GetBehaviourHistories(user string, kind TargetType) []
 
 func (mine *cacheContext) GetBehavioursLatestByScene(scene string, tp, num uint32) []*nosql.Behaviour {
 	list, err := nosql.GetBehavioursByScene(scene, tp, int64(num))
+	if err != nil {
+		logger.Error(err.Error())
+		return nil
+	}
+	return list
+}
+
+func (mine *cacheContext) GetBehavioursLatestBySceneAct(scene string, act, num uint32) []*nosql.Behaviour {
+	list, err := nosql.GetBehavioursBySceneAct(scene, act, int64(num))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil

@@ -137,6 +137,9 @@ func (mine *BehaviourService) GetByFilter(ctx context.Context, in *pb.RequestFil
 	} else if in.Key == "dynamic" {
 		tp, _ := strconv.ParseInt(in.Value, 10, 32)
 		list = cache.Context().GetBehavioursLatestByScene(in.Owner, uint32(tp), in.Number)
+	} else if in.Key == "action" {
+		act, _ := strconv.ParseInt(in.Value, 10, 32)
+		list = cache.Context().GetBehavioursLatestBySceneAct(in.Owner, uint32(act), in.Number)
 	} else {
 		out.Status = outError(path, "the key not defined", pbstatus.ResultStatus_Empty)
 		return nil
